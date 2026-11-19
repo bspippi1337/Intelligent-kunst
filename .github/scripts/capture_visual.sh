@@ -13,6 +13,15 @@ for n in 01 02 03 04 05; do
     adb exec-out screencap -p > "visual/study-${n}.png"
     test -s "visual/study-${n}.png"
 done
+# Visual lineage: click EVOLVER after the sixth generated composition.
+# Capturing both sides allows independent appraisal of conceptual continuity.
+adb exec-out screencap -p > visual/evolution-parent.png
+adb shell input tap 550 2010
+sleep 14
+adb exec-out screencap -p > visual/evolution-child.png
+test -s visual/evolution-parent.png
+test -s visual/evolution-child.png
+
 # Launch a deterministic non-network test of the new curved vector renderer.
 adb shell am force-stop no.blckswan.intelligentkunst.lab
 adb shell am start -n no.blckswan.intelligentkunst.lab/no.blckswan.intelligentkunst.MainActivity \
