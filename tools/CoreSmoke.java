@@ -26,12 +26,27 @@ public class CoreSmoke {
             check(x.score >= 0 && x.score <= 1, "bounded score");
             check(Artwork.decode(x.encode()).encode().equals(x.encode()), "archive round trip");
         }
+        int[] flat = new int[192*320];
+        int[] composed = new int[192*320];
+        java.util.Arrays.fill(flat, 0xFFEFE3CD);
+        java.util.Arrays.fill(composed, 0xFFEFE3CD);
+        for(int y=80;y<260;y++)for(int x=40;x<108;x++)composed[y*192+x]=0xFF20382C;
+        PixelCritic.Analysis plain = PixelCritic.analyze(flat,192,320);
+        PixelCritic.Analysis interesting = PixelCritic.analyze(composed,192,320);
+        check(interesting.score > plain.score, "actual pixels influence selection");
+        check(PixelCritic.difference(interesting.signature,plain.signature) > 0,
+            "image fingerprints respond to subject");
+        for(int k=0;k<128;k++){
+            Artwork story=d.create(k, List.of(),t);
+            check(story.style == Artwork.Style.FABLE, "new art tells stories");
+            check(!story.intention().isEmpty(), "story has intentional subject");
+        }
         FieldNoise noise = new FieldNoise(1337);
         for (int i = -300; i < 300; i++) {
             double n = noise.fractal(i / 17.0, i / 29.0);
             check(n >= 0 && n <= 1, "bounded smooth noise");
         }
-        System.out.println("PASS: reproducibility, 365 daily editions, genealogy, critic, 3000 artworks, codecs, noise");
+        System.out.println("PASS: pixel vision, art subject selection, 365 daily editions, genealogy, 3000 artworks, codecs, noise");
         System.out.println("Example: " + a.title() + " | " + a.style.label + " | genome=" + a.id());
     }
     private static void check(boolean v, String message) { if (!v) throw new AssertionError(message); }
