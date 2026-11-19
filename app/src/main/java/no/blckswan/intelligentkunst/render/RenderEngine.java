@@ -21,6 +21,10 @@ public final class RenderEngine {
 
     public void draw(Canvas canvas, int width, int height, Artwork art) {
         if (art == null || width < 1 || height < 1) return;
+        if (art.style == Artwork.Style.AIGUIDE) {
+            new ScriptPainter().draw(canvas, width, height, art);
+            return;
+        }
         if (art.style == Artwork.Style.FABLE) {
             new StoryPainter().draw(canvas, width, height, art);
             return;
