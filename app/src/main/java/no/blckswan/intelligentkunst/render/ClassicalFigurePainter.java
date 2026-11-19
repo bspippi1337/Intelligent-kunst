@@ -180,6 +180,12 @@ public final class ClassicalFigurePainter {
         detail(c,charcoal,247,551,218,626,225,672);
     }
     private void head(Canvas c,boolean charcoal){
+        // A head is roughly a sixth of the complete study, not a giant icon.
+        // Draw the neck first so the chin can overlap naturally.
+        c.save();
+        c.scale(.75f,.75f,400,350);
+        fill(charcoal,0xFFB8896D);
+        c.drawOval(new RectF(370,319,434,401),paint);
         fill(charcoal,0xFFCDA184);
         path.reset();path.moveTo(394,172);
         path.cubicTo(343,165,324,203,328,254);
@@ -188,25 +194,28 @@ public final class ClassicalFigurePainter {
         path.cubicTo(461,332,480,295,476,247);
         path.cubicTo(473,198,445,165,394,172);
         path.close();c.drawPath(path,paint);
-        // Neck beneath the jaw.
-        fill(charcoal,0xFFB8896D);
-        c.drawOval(new RectF(367,324,434,398),paint);
-        shade(c,charcoal,new RectF(345,188,436,338),0x60FFE4C2);
-        fill(charcoal,0xFF3C2F2B);
+        shade(c,charcoal,new RectF(341,202,429,330),0x4FFFE6C5);
+
+        // Hair has its own material shader. It must not inherit the skin shader.
+        paint.reset();paint.setAntiAlias(true);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setShader(new LinearGradient(335,150,480,260,
+            charcoal?new int[]{0xFF50483E,0xFF8A8174}
+                :new int[]{0xFF292927,0xFF5A4541},
+            null,Shader.TileMode.CLAMP));
         path.reset();path.moveTo(325,243);
         path.cubicTo(319,178,354,131,402,130);
         path.cubicTo(467,133,483,180,483,226);
         path.cubicTo(471,205,465,185,446,180);
         path.cubicTo(420,162,390,182,371,197);
         path.cubicTo(344,199,344,232,325,243);
-        path.close();c.drawPath(path,paint);
-        if(!charcoal){
-            shade(c,false,new RectF(326,141,468,221),0x334D4134);
-        }
-        detail(c,charcoal,357,262,379,256,389,263);
-        detail(c,charcoal,418,262,443,253,452,260);
+        path.close();c.drawPath(path,paint);paint.setShader(null);
+
+        detail(c,charcoal,357,262,379,257,389,263);
+        detail(c,charcoal,418,262,443,254,452,260);
         detail(c,charcoal,399,273,390,302,406,308);
         detail(c,charcoal,385,328,399,337,416,330);
+        c.restore();
     }
     private void anatomy(Canvas c,boolean charcoal){
         // Structural lines: volume, navel, hip shift and overlapping soft planes.
@@ -220,9 +229,9 @@ public final class ClassicalFigurePainter {
         paint.setShader(null);paint.setStyle(Paint.Style.FILL);
         paint.setColor(charcoal?0x775A4B3D:0xAA895841);
         c.drawOval(new RectF(390,661,400,669),paint);
-        paint.setColor(charcoal?0x335C4A37:0x448E5B45);
-        c.drawOval(new RectF(332,476,360,493),paint);
-        c.drawOval(new RectF(443,476,474,493),paint);
+        paint.setColor(charcoal?0x125C4A37:0x188E5B45);
+        c.drawOval(new RectF(341,483,351,488),paint);
+        c.drawOval(new RectF(455,481,465,487),paint);
     }
     private void foreground(Canvas c,boolean charcoal,SplittableRandom r){
         paint.setShader(null);paint.setStyle(Paint.Style.FILL);
@@ -266,8 +275,10 @@ public final class ClassicalFigurePainter {
         paint.reset();paint.setAntiAlias(true);
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeCap(Paint.Cap.ROUND);
-        paint.setStrokeWidth(18);
-        paint.setColor(charcoal?0x55FFF5DE:color);
+        paint.setStrokeWidth(9);
+        int pigment=charcoal?0x30FFF5DE:Color.argb(
+            Math.min(38,Color.alpha(color)),Color.red(color),Color.green(color),Color.blue(color));
+        paint.setColor(pigment);
         Path p=new Path();p.moveTo(x1,y1);p.quadTo((x1+x2)*.5f-13,(y1+y2)*.5f,x2,y2);
         c.drawPath(p,paint);
     }
