@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.1 · Visible-art review fixes · 2026-11-19
+
+- Correct adult figure head-to-body ratio and layered anatomy, with proper dark hair material and subtler highlights.
+- Present academic figure studies in charcoal by default; oil and sepia still available.
+- Respect Android 15 edge-to-edge status/navigation insets in the new classical studio. The earlier emulator screenshot showed overlapping status controls.
+- Preserve 0.6.0 network-free implementation and private photo selection.
+
+**Scope:** This remains original procedural figure painting; it is not neural photo-realistic synthetic-human generation.
+
 ## 0.6.0 · No keys, Classical Atelier & Photo Studies · 2026-11-19
 
 - Removed Android API-key form and OpenAI HTTP client entirely. The APK no longer declares INTERNET permission; fully offline by default and by Android sandbox enforcement.
