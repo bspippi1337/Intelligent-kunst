@@ -45,6 +45,10 @@ public final class ArtArchive {
         try {return Artwork.decode(store.getString("current",""));}
         catch(RuntimeException ignored){return null;}
     }
+    public boolean isSaved(Artwork artwork) {
+        for(Artwork item:saved())if(item.id().equals(artwork.id()))return true;
+        return false;
+    }
     public boolean save(Artwork artwork) {
         List<Artwork> items=saved();
         for(Artwork item:items)if(item.id().equals(artwork.id()))return false;
@@ -72,10 +76,12 @@ public final class ArtArchive {
         for(int i=0;i<values.length;i++){if(i>0)s.append(',');s.append(values[i]);}
         return s.toString();
     }
-    public void teach(Artwork artwork) {
+    public boolean teach(Artwork artwork) {
+        // One vote per artwork prevents endlessly inflating preferences by tapping LÆR.
+        if(!save(artwork))return false;
         ArtDirector.Taste taste=taste();taste.like(artwork);
         store.edit().putString("style_votes",join(taste.styleVotes()))
             .putString("palette_votes",join(taste.paletteVotes())).apply();
-        save(artwork);
+        return true;
     }
 }
