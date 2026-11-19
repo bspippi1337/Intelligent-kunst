@@ -35,6 +35,12 @@ Ingen av motivene velges på grunnlag av brukerhistorikk eller personlige refera
 
 **Ærlig avgrensning:** dette er fremdeles en begrenset *regelbasert* oppfinner med bildepikselanalyse. Det er ikke en trent, åpent assosierende bildemodell, og pixel-statistikk alene kan ikke måle kunstnerisk kvalitet. Hvis målet er et virkelig overraskende kunstnersubjekt, må videre versjoner øke handlingsrom, kritikk og læring utover disse faste byggesteinene.
 
+## Atelier 007.1 · Responsivt lerret
+
+På kompakte telefoner og i liggende format ruller verktøypanelet uavhengig
+av bildeflaten. Kunstverket skal fortsatt være synlig når du velger
+kull, olje, foto eller lokal nevral generering.
+
 ## Atelier 007 · Faktisk lokal nevralkunst, uten API-nøkkel
 
 **✦ AKT/FOTO → LOKAL AI** er nå en reell overgang til den åpne,
