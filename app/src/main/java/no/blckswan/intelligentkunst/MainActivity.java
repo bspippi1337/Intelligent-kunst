@@ -158,6 +158,8 @@ public final class MainActivity extends Activity {
         secondaryRow.addView(space(dp(9)));
         secondaryRow.addView(archiveButton,weighted(1.1f,0));
         likeButton.setOnClickListener(v->like());
+        likeButton.setOnLongClickListener(v->{reject();return true;});
+        likeButton.setContentDescription("Trykk for å lære kunstneren et positivt eksempel. Hold inne for å avvise og skape et nytt verk.");
         exportButton.setOnClickListener(v->export());
         archiveButton.setOnClickListener(v->openArchive());
 
@@ -257,7 +259,8 @@ public final class MainActivity extends Activity {
         status.setText("VERKETS SELEKSJONSSCORE   " + Math.round(next.score*100) + "/100"
             + (next.hasParent ? "   ·   FRA " + String.format(Locale.ROOT,"%016X",next.parentSeed).substring(0,6) : ""));
         edition.setText("ATELIER 003     /     VERK " + archive.recent().size() + " · UTEN SKY");
-        likeButton.setText(archive.isSaved(next) ? "♥  LÆRT" : "♡  LÆR");
+        likeButton.setText(archive.isSaved(next) ? "♥  LÆRT" :
+            archive.isRejected(next) ? "✕  AVVIST" : "♡  LÆR");
     }
     private void like(){
         if(artwork==null)return;
@@ -265,6 +268,15 @@ public final class MainActivity extends Activity {
         likeButton.setText("♥  LÆRT");
         shortToast(learned ? "Smaken din er lagret lokalt. Verket er i samlingen."
                            : "Dette verket har allerede lært kunstneren noe.");
+    }
+
+    private void reject(){
+        if(artwork==null||composing)return;
+        if(!archive.reject(artwork)){
+            shortToast("Dette verket har allerede fått en tilbakemelding.");return;
+        }
+        shortToast("Registrert: denne ideen skal veie mindre. Skaper et nytt verk.");
+        newArtwork();
     }
 
     private void showDnaMenu(){
@@ -360,6 +372,8 @@ public final class MainActivity extends Activity {
                 + "Den valgte regelen endrer selve illustrasjonen.\n\n"
                 + "Det er en kombinatorisk kunstgrammatikk, ikke fri idétenkning. "
                 + "Den bruker ingen av dine tidligere prosjekter eller motiver.\n\n"
+                + "LÆR gir én positiv tilbakemelding. Hold LÆR inne for å AVVISE "
+                + "motivet og ideen, og skape et nytt forsøk.\n\n"
                 + "Dette er håndprogrammert generativ kunst med bildepikselanalyse, "
                 + "ikke en trent generativ bildemodell. Ingen nettverkstillatelser.")
             .setPositiveButton("Tilbake til atelieret",null).show();
