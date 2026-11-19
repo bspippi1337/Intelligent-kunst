@@ -29,6 +29,7 @@ import android.provider.MediaStore;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import java.io.IOException;
@@ -93,10 +94,20 @@ public final class ClassicalStudioActivity extends Activity {
         stage=new StudioView();
         LinearLayout.LayoutParams stageParams=new LinearLayout.LayoutParams(-1,0,1f);
         root.addView(stage,stageParams);
+        // One responsive panel for small and landscape screens. The painting
+        // stays visible while tools scroll independently.
+        ScrollView controlScroll=new ScrollView(this);
+        controlScroll.setFillViewport(false);
+        controlScroll.setVerticalScrollBarEnabled(true);
+        LinearLayout controls=new LinearLayout(this);
+        controls.setOrientation(LinearLayout.VERTICAL);
+        controls.setPadding(0,0,0,dp(8));
+        controlScroll.addView(controls);
+        root.addView(controlScroll,new LinearLayout.LayoutParams(-1,0,.74f));
         message=label("Originalt figurstudium. Bytt positur eller velg ditt eget foto.",11,FG,false);
         message.setGravity(Gravity.CENTER);
         message.setPadding(dp(4),dp(12),dp(4),dp(12));
-        root.addView(message);
+        controls.addView(message);
 
         LinearLayout modeRow=new LinearLayout(this);
         String[] captions={"FOTO", "OLJE", "KULL", "SEPIA"};
@@ -109,7 +120,7 @@ public final class ClassicalStudioActivity extends Activity {
             modeRow.addView(modes[i],lp);
             modes[i].setOnClickListener(v->{activeMode=choice;showSelection();});
         }
-        root.addView(modeRow);
+        controls.addView(modeRow);
 
         LinearLayout primary=new LinearLayout(this);
         primary.setPadding(0,dp(9),0,0);
@@ -119,7 +130,7 @@ public final class ClassicalStudioActivity extends Activity {
         primary.addView(sourceButton,weighted(1));
         primary.addView(figureButton,weighted(1));
         primary.addView(poseButton,weighted(1));
-        root.addView(primary);
+        controls.addView(primary);
         sourceButton.setOnClickListener(v->openPhoto());
         figureButton.setOnClickListener(v->{
             revision.incrementAndGet();
@@ -138,19 +149,19 @@ public final class ClassicalStudioActivity extends Activity {
         neuralButton=button("✦  LOKAL AI · GENERER MED EGEN MODELL",false);
         LinearLayout.LayoutParams np=new LinearLayout.LayoutParams(-1,dp(46));
         np.topMargin=dp(9);
-        root.addView(neuralButton,np);
+        controls.addView(neuralButton,np);
         neuralButton.setOnClickListener(v->openLocalNeuralDialog());
 
         saveButton=button("↓  EKSPORTER KUNSTVERK SOM PNG",true);
         LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,dp(50));
         sp.topMargin=dp(9);
-        root.addView(saveButton,sp);
+        controls.addView(saveButton,sp);
         saveButton.setOnClickListener(v->exportPng());
 
         TextView notice=label("Fotorealisme: trofast gjengivelse av ditt foto, ikke syntetisk AI-generering.",9,0xFFB5ADA0,false);
         notice.setGravity(Gravity.CENTER);
         notice.setPadding(dp(5),dp(10),dp(5),0);
-        root.addView(notice);
+        controls.addView(notice);
         // Android 15+ draws behind system bars by default. Keep all controls
         // and the bottom privacy explanation safely within the visible area.
         root.setOnApplyWindowInsetsListener((view,insets)->{
