@@ -8,14 +8,15 @@
 
 [![Android CI](https://github.com/bspippi1337/Intelligent-kunst/actions/workflows/android.yml/badge.svg)](https://github.com/bspippi1337/Intelligent-kunst/actions/workflows/android.yml)
 ![Android 10+](https://img.shields.io/badge/Android-10%2B-DAFB81?labelColor=111111)
-![Offline](https://img.shields.io/badge/network-0%20requests-DAFB81?labelColor=111111)
+![Offline core](https://img.shields.io/badge/offline-core-DAFB81?labelColor=111111)
+![Optional AI](https://img.shields.io/badge/AI-opt--in-A3B7FE?labelColor=111111)
 ![Language](https://img.shields.io/badge/language-Java%2017-A3B7FE?labelColor=111111)
 
 </div>
 
 ## Kunstneren bor i telefonen
 
-**Intelligent Kunst** er en helt native Android-app som skaper originale, reproducerbare generative verk. Den sender aldri data til en sky. Ingen innlogging, API-nøkler, reklame, analyse-SDK-er eller nettverkstillatelser.
+**Intelligent Kunst** er en native Android-app med to adskilte verksteder: en lokal, regelbasert kunstmotor som fungerer helt uten nett, og en **frivillig AI-modus** bygget på [aiguide-dev](https://github.com/bspippi1337/aiguide-dev). AI-modusen sender kun brukervalgt prompt til en ekstern modell med en API-nøkkel du selv oppgir. Ingen innlogging, reklame eller analyse-SDK-er.
 
 Hvert trykk på **SKAP NYTT** setter nå et lite digitalt atelier i arbeid:
 
@@ -33,6 +34,19 @@ Hvert trykk på **SKAP NYTT** setter nå et lite digitalt atelier i arbeid:
 Ingen av motivene velges på grunnlag av brukerhistorikk eller personlige referanser. Variasjonene er reproduserbare fra DNA og får egne fysiske materialer, fargeflater, skygger og ufullkommen trykktekstur. De gamle seks geometriske stilene er fortsatt lesbare fra eldre DNA, men brukes ikke ved ny generering.
 
 **Ærlig avgrensning:** dette er fremdeles en begrenset *regelbasert* oppfinner med bildepikselanalyse. Det er ikke en trent, åpent assosierende bildemodell, og pixel-statistikk alene kan ikke måle kunstnerisk kvalitet. Hvis målet er et virkelig overraskende kunstnersubjekt, må videre versjoner øke handlingsrom, kritikk og læring utover disse faste byggesteinene.
+
+## Atelier 004 · aiguide: AI lager bildemanus, Android maler
+
+**✦ AI** åpner et eget atelier som bruker den originale `aiguide-dev`-promptmalen og den samme `ask(query)`- og JSONL-loggflyten i en native Android-port. En ekstern språkmodell lager en **ny, konkret bildekomposisjon med opptil 90 tegnbare elementer**, og Android-maleren gjengir den som et vektorbasert verk. AI-kunstverk lagres som DNA v3 med hele bildemanuset, slik at bildene kan åpnes og eksporteres senere **uten nett**.
+
+Du kan også bruke det **faktiske Python-biblioteket** med `tools/aiguide_generate.py` i Termux/Linux og importere JSON i appen via `DNA / ? → Importer AI-bildemanus`. Originalbiblioteket og den native Android-porten er forskjellige implementasjoner av samme arbeidsflyt.
+
+- AI-knappen krever internett og din egen OpenAI API-nøkkel. Nøkkelen lagres ikke, og modellen kan påføre API-kostnader.
+- Resultatets tegnekommandoer blir validert og begrenset til et lite sett med former, kurver, linjer og polygoner. Ingen skript eller eksterne ressurs-URL-er blir utført.
+- Logg med synlig forespørsel og svar lagres privat i appens filer, i JSONL-format. Ingen påstand om tilgang til skjult resonnering.
+- **Dette er KI-styrt illustrasjon, ikke en diffusjonsmodell.** Kunstnerisk kvalitet kan ikke garanteres av språkmodellen eller den eksisterende pikselpoengsummen.
+
+[Les integrasjonsguiden for aiguide](docs/AIGUIDE.md).
 
 ## Atelier 002 · Dagens verk, kritikk og avstamning
 
@@ -95,7 +109,7 @@ app/src/main/java/no/blckswan/intelligentkunst/
 └── MainActivity.java      # atelier, import, galleri, eksport og deling
 ```
 
-**Personvern:** Appen har null `INTERNET`-tillatelser, og skriver bare til privat app-lagring og til den offentlige bildegallerien når du selv eksporterer. Androids delingsmeny vises kun på forespørsel. Du kan inspisere hele kildekoden.
+**Personvern:** Appen har `INTERNET`-tillatelse for den valgfrie AI-knappen, men offline-motoren sender ingen forespørsler. AI-modusen sender prompt og en midlertidig API-nøkkel over HTTPS til leverandøren, og loggfører kun synlig prompt og svar privat på enheten. Nøkkelen lagres ikke. PNG havner i bildegalleriet bare når du eksporterer; delingsmenyen vises på forespørsel. Kildekoden kan inspiseres.
 
 **Ytelse:** Avansert malearbeid skjer utenfor UI-tråden. Kunstverk blir rendret én gang som skjermcache, og ved eksport i full oppløsning. Verken komposisjon eller innstillinger trenger en server. DNA-valg er reproduserbare, mens opplevelsen rundt dem er interaktiv.
 
