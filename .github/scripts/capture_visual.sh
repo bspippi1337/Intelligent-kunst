@@ -13,4 +13,11 @@ for n in 01 02 03 04 05; do
     adb exec-out screencap -p > "visual/study-${n}.png"
     test -s "visual/study-${n}.png"
 done
+# Launch a deterministic non-network test of the new curved vector renderer.
+adb shell am force-stop no.blckswan.intelligentkunst
+adb shell am start -n no.blckswan.intelligentkunst/.MainActivity \
+    --ez ik_visual_fixture true
+sleep 12
+adb exec-out screencap -p > visual/study-vector-fixture.png
+test -s visual/study-vector-fixture.png
 sha256sum visual/*.png
