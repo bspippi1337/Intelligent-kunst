@@ -1,6 +1,8 @@
 package no.blckswan.intelligentkunst.core;
 
 import java.util.Locale;
+import java.util.Base64;
+import java.nio.charset.StandardCharsets;
 
 /** Immutable genome of one piece. Every generation is reproducible by its encoded genome. */
 public final class Artwork {
@@ -11,7 +13,8 @@ public final class Artwork {
         TERRAIN("TOPOGRAFI", "Et landskap som aldri fantes"),
         WEAVE("VEV", "Orden på grensen til kaos"),
         PRISM("PRISME", "Geometrien drømmer i farger"),
-        FABLE("FORTELLING", "Et motiv, et spørsmål og en verden utenfor rammen");
+        FABLE("FORTELLING", "Et motiv, et spørsmål og en verden utenfor rammen"),
+        AIGUIDE("AI-ATELIER", "Et bildemanus skapt av en ekstern språkmodell");
 
         public final String label;
         public final String thought;
@@ -40,23 +43,31 @@ public final class Artwork {
     public final int generation;
     public final boolean hasParent;
     public final long parentSeed;
+    /** Validated JSON drawing commands, embedded in DNA v3 for offline reopening. */
+    public final String sceneJson;
 
     public Artwork(long seed, Style style, int palette, double energy, double complexity,
                    double balance, double drift, double score, int generation) {
-        this(seed, style, palette, energy, complexity, balance, drift, score, generation, false, 0L);
+        this(seed, style, palette, energy, complexity, balance, drift, score, generation, false, 0L, null);
+    }
+
+    public Artwork(long seed, Style style, int palette, double energy, double complexity,
+                   double balance, double drift, double score, int generation, String sceneJson) {
+        this(seed, style, palette, energy, complexity, balance, drift, score, generation, false, 0L, sceneJson);
     }
 
     /** DNA v2: records which earlier work was deliberately evolved. */
     public Artwork(long seed, Style style, int palette, double energy, double complexity,
                    double balance, double drift, double score, int generation, long parentSeed) {
-        this(seed, style, palette, energy, complexity, balance, drift, score, generation, true, parentSeed);
+        this(seed, style, palette, energy, complexity, balance, drift, score, generation, true, parentSeed, null);
     }
 
     private Artwork(long seed, Style style, int palette, double energy, double complexity,
                     double balance, double drift, double score, int generation,
-                    boolean hasParent, long parentSeed) {
+                    boolean hasParent, long parentSeed, String sceneJson) {
         if (style == null || palette < 0 || palette >= PALETTES.length || generation < 0
-                || (hasParent && generation == 0)) {
+                || (hasParent && generation == 0) || (style == Style.AIGUIDE && (sceneJson == null || sceneJson.length() > 18000))
+                || (style != Style.AIGUIDE && sceneJson != null)) {
             throw new IllegalArgumentException("Invalid artwork genome");
         }
         this.seed = seed;
@@ -70,6 +81,7 @@ public final class Artwork {
         this.generation = generation;
         this.hasParent = hasParent;
         this.parentSeed = parentSeed;
+        this.sceneJson = sceneJson;
     }
 
     private static double clamp(double n) { return Double.isFinite(n) ? Math.max(0, Math.min(1, n)) : 0.5; }
@@ -77,6 +89,7 @@ public final class Artwork {
     public int[] colors() { return PALETTES[palette].clone(); }
     public String id() { return String.format(Locale.ROOT, "%016X", seed); }
     public String title() {
+        if(style == Style.AIGUIDE) return "Et generert visuelt utsagn";
         if(style == Style.FABLE) return StoryPlan.title(seed);
         String[] first = {"Stillheten", "Det uferdige", "Et ekko", "Mellomrom", "Tyngdeløs", "Den siste", "Nattens", "Uten kart", "Lysbrudd", "Uten navn", "Forskyvning", "Under huden"};
         String[] last = {"arkitektur", "av morgendagen", "i bevegelse", "av ingenting", "horisont", "som puster", "paradoks", "av lys", "i et annet univers", "tilfeldighet", "balanse", "etter stormen"};
@@ -94,6 +107,8 @@ public final class Artwork {
     public String encode() {
         String record = String.format(Locale.ROOT, "1:%s:%d:%d:%.6f:%.6f:%.6f:%.6f:%.6f:%d",
             id(), style.ordinal(), palette, energy, complexity, balance, drift, score, generation);
+        if(sceneJson != null) return "3" + record.substring(1) + ":"
+            + Base64.getUrlEncoder().withoutPadding().encodeToString(sceneJson.getBytes(StandardCharsets.UTF_8));
         return hasParent ? "2" + record.substring(1) + ":"
             + String.format(Locale.ROOT, "%016X", parentSeed) : record;
     }
@@ -102,7 +117,8 @@ public final class Artwork {
         if (value == null) throw new IllegalArgumentException("Missing DNA");
         String[] p = value.split(":", -1);
         boolean v2 = p.length == 11 && "2".equals(p[0]);
-        if (!v2 && !(p.length == 10 && "1".equals(p[0])))
+        boolean v3 = p.length == 11 && "3".equals(p[0]);
+        if (!v2 && !v3 && !(p.length == 10 && "1".equals(p[0])))
             throw new IllegalArgumentException("Unknown artwork format");
         int style = Integer.parseInt(p[2]);
         if (style < 0 || style >= Style.values().length) throw new IllegalArgumentException("Invalid style");
@@ -114,6 +130,12 @@ public final class Artwork {
         double drift = Double.parseDouble(p[7]);
         double score = Double.parseDouble(p[8]);
         int generation = Integer.parseInt(p[9]);
+        if (v3) {
+            byte[] bytes=Base64.getUrlDecoder().decode(p[10]);
+            if(bytes.length > 18000)throw new IllegalArgumentException("Oversized AI scene");
+            return new Artwork(seed,Style.values()[style],palette,energy,complexity,balance,
+                drift,score,generation,new String(bytes,StandardCharsets.UTF_8));
+        }
         if (v2) return new Artwork(seed, Style.values()[style], palette,
             energy, complexity, balance, drift, score, generation,
             Long.parseUnsignedLong(p[10], 16));
