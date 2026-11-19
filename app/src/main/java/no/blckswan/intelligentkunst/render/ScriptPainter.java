@@ -3,6 +3,9 @@ package no.blckswan.intelligentkunst.render;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.LinearGradient;
+import android.graphics.RadialGradient;
+import android.graphics.Shader;
 import android.graphics.Path;
 import android.graphics.RectF;
 import org.json.JSONArray;
@@ -38,6 +41,7 @@ public final class ScriptPainter {
                 paint.setShader(null);
                 paint.setStyle(Paint.Style.FILL);
                 paint.setColor(Color.argb(alpha,Color.red(rgb),Color.green(rgb),Color.blue(rgb)));
+                if(element.has("gradient"))applyGradient(element.getJSONObject("gradient"),width,height,alpha);
                 float x=(float)element.optDouble("x",0)*width;
                 float y=(float)element.optDouble("y",0)*height;
                 switch(kind){
@@ -67,6 +71,38 @@ public final class ScriptPainter {
                             (float)element.getDouble("y2")*height);
                         canvas.drawPath(path,paint);
                         break;
+                    case "path":
+                        if("stroke".equals(element.optString("mode","fill")))
+                            setupStroke(element,width,height);
+                        JSONArray commands=element.getJSONArray("commands");
+                        path.reset();
+                        for(int j=0;j<commands.length();j++){
+                            JSONObject command=commands.getJSONObject(j);
+                            String op=command.getString("op");
+                            switch(op) {
+                                case "M":
+                                    path.moveTo((float)command.getDouble("x")*width,
+                                        (float)command.getDouble("y")*height);break;
+                                case "L":
+                                    path.lineTo((float)command.getDouble("x")*width,
+                                        (float)command.getDouble("y")*height);break;
+                                case "Q":
+                                    path.quadTo((float)command.getDouble("cx")*width,
+                                        (float)command.getDouble("cy")*height,
+                                        (float)command.getDouble("x")*width,
+                                        (float)command.getDouble("y")*height);break;
+                                case "C":
+                                    path.cubicTo((float)command.getDouble("cx1")*width,
+                                        (float)command.getDouble("cy1")*height,
+                                        (float)command.getDouble("cx2")*width,
+                                        (float)command.getDouble("cy2")*height,
+                                        (float)command.getDouble("x")*width,
+                                        (float)command.getDouble("y")*height);break;
+                                case "Z":path.close();break;
+                            }
+                        }
+                        canvas.drawPath(path,paint);
+                        break;
                     case "poly":
                         JSONArray points=element.getJSONArray("points");
                         if(points.length()<3)break;
@@ -88,6 +124,29 @@ public final class ScriptPainter {
             paint.setColor(0xFFF7EAE3);paint.setTextSize(Math.min(width,height)*.048f);
             canvas.drawText("UGYLDIG AI-BILDEMANUS",width*.07f,height*.52f,paint);
         }finally{canvas.restore();}
+    }
+    private void applyGradient(JSONObject gradient,int width,int height,int alpha)
+        throws JSONException {
+        int start=Color.parseColor(gradient.getString("start"));
+        int end=Color.parseColor(gradient.getString("end"));
+        Shader shader;
+        if("linear".equals(gradient.getString("type"))) {
+            shader=new LinearGradient(
+                (float)gradient.getDouble("x1")*width,
+                (float)gradient.getDouble("y1")*height,
+                (float)gradient.getDouble("x2")*width,
+                (float)gradient.getDouble("y2")*height,
+                start,end,Shader.TileMode.CLAMP);
+        } else {
+            shader=new RadialGradient(
+                (float)gradient.getDouble("cx")*width,
+                (float)gradient.getDouble("cy")*height,
+                (float)gradient.getDouble("r")*Math.min(width,height),
+                start,end,Shader.TileMode.CLAMP);
+        }
+        paint.setShader(shader);
+        paint.setColor(Color.WHITE);
+        paint.setAlpha(alpha);
     }
     private void setupStroke(JSONObject command,int width,int height){
         paint.setStyle(Paint.Style.STROKE);
