@@ -83,6 +83,12 @@ public final class MainActivity extends Activity {
             | View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
         archive=new ArtArchive(this);
         constructUi();
+        // Debug-only integration fixture: renders the same bundled scene the user can
+        // open from the menu. Never exposed by a production build intent.
+        if((getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE)!=0
+            && getIntent().getBooleanExtra("ik_visual_fixture",false)){
+            loadDemoScene();return;
+        }
         Artwork last=archive.current();
         if(last!=null && (last.style==Artwork.Style.FABLE || last.style==Artwork.Style.AIGUIDE))show(last,false);
         else newArtwork(); // old works remain in the archive; first launch shows the new painter
