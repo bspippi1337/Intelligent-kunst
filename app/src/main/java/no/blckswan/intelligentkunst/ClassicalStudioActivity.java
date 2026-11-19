@@ -8,6 +8,10 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
+import android.graphics.LinearGradient;
+import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
@@ -109,11 +113,13 @@ public final class ClassicalStudioActivity extends Activity {
         root.addView(primary);
         sourceButton.setOnClickListener(v->openPhoto());
         figureButton.setOnClickListener(v->{
+            revision.incrementAndGet();
             figure=true;activeMode=PhotoPainter.Mode.OIL;
             subjectLabel.setText("AKADEMISK AKT / STUDIO");
             showSelection();
         });
         poseButton.setOnClickListener(v->{
+            revision.incrementAndGet();
             figure=true;
             figureSeed=random.nextLong();
             subjectLabel.setText("AKADEMISK AKT / NY POSITUR");
@@ -269,8 +275,7 @@ public final class ClassicalStudioActivity extends Activity {
                 }
                 export=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888);
                 Canvas canvas=new Canvas(export);
-                if(figureCopy)new ClassicalFigurePainter().draw(canvas,width,height,
-                    seed,mode==PhotoPainter.Mode.CHARCOAL||mode==PhotoPainter.Mode.SEPIA);
+                if(figureCopy)drawFigure(canvas,width,height,seed,mode);
                 else PhotoPainter.draw(canvas,width,height,decoded,mode,seed);
                 ContentValues values=new ContentValues();
                 values.put(MediaStore.Images.Media.DISPLAY_NAME,
@@ -309,14 +314,29 @@ public final class ClassicalStudioActivity extends Activity {
             }
         });
     }
+    private static void drawFigure(Canvas c,int w,int h,long seed,PhotoPainter.Mode mode){
+        if(mode!=PhotoPainter.Mode.SEPIA){
+            new ClassicalFigurePainter().draw(c,w,h,seed,mode==PhotoPainter.Mode.CHARCOAL);
+            return;
+        }
+        Paint sepia=new Paint(Paint.FILTER_BITMAP_FLAG);
+        sepia.setColorFilter(new ColorMatrixColorFilter(new ColorMatrix(new float[]{
+            .393f,.769f,.189f,0,0,
+            .349f,.686f,.168f,0,0,
+            .272f,.534f,.131f,0,0,
+            0,0,0,1,0
+        })));
+        int layer=c.saveLayer(0,0,w,h,sepia);
+        new ClassicalFigurePainter().draw(c,w,h,seed,false);
+        c.restoreToCount(layer);
+    }
+
     private final class StudioView extends View {
         private StudioView(){super(ClassicalStudioActivity.this);}
         @Override protected void onDraw(Canvas canvas){
             int w=getWidth(),h=getHeight();
             if(w==0||h==0)return;
-            if(figure)new ClassicalFigurePainter().draw(canvas,w,h,figureSeed,
-                activeMode==PhotoPainter.Mode.CHARCOAL||
-                activeMode==PhotoPainter.Mode.SEPIA);
+            if(figure)drawFigure(canvas,w,h,figureSeed,activeMode);
             else if(preview!=null&&!preview.isRecycled())
                 PhotoPainter.draw(canvas,w,h,preview,activeMode,figureSeed);
             else canvas.drawColor(BG);
