@@ -181,7 +181,18 @@ public final class ClassicalStudioActivity extends Activity {
         });
         setContentView(root);
         root.requestApplyInsets();
-        if(getIntent().getBooleanExtra("ik_classical_fixture",false)){
+        if(state!=null){
+            figureSeed=state.getLong("ik_figure_seed",figureSeed);
+            figure=state.getBoolean("ik_figure",true);
+            int modeIndex=state.getInt("ik_mode",PhotoPainter.Mode.CHARCOAL.ordinal());
+            if(modeIndex>=0&&modeIndex<PhotoPainter.Mode.values().length)
+                activeMode=PhotoPainter.Mode.values()[modeIndex];
+            String uriText=state.getString("ik_photo_uri","");
+            if(!figure&&!uriText.isEmpty()){
+                try{imageUri=Uri.parse(uriText);loadPhoto(imageUri,true);}
+                catch(Exception error){figure=true;}
+            }
+        }else if(getIntent().getBooleanExtra("ik_classical_fixture",false)){
             figureSeed=249833L;figure=true;
         }else{
             String last=getPreferences(MODE_PRIVATE).getString("photo_uri","");
@@ -271,6 +282,14 @@ public final class ClassicalStudioActivity extends Activity {
         }
     }
 
+    @Override protected void onSaveInstanceState(Bundle out){
+        out.putLong("ik_figure_seed",figureSeed);
+        out.putBoolean("ik_figure",figure);
+        out.putInt("ik_mode",activeMode.ordinal());
+        out.putString("ik_photo_uri",imageUri==null?"":imageUri.toString());
+        super.onSaveInstanceState(out);
+    }
+
     private int dp(float v){return (int)(getResources().getDisplayMetrics().density*v+.5f);}
     private LinearLayout.LayoutParams weighted(float n){
         LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(47),n);
@@ -342,6 +361,10 @@ public final class ClassicalStudioActivity extends Activity {
         loadPhoto(uri);
     }
     private void loadPhoto(Uri uri){
+        loadPhoto(uri,false);
+    }
+    private void loadPhoto(Uri uri,boolean preserveMode){
+        final PhotoPainter.Mode requestedMode=activeMode;
         final int token=revision.incrementAndGet();
         message.setText("LESER FOTO LOKALT · INGEN OPPLASTING");
         worker.execute(()->{
@@ -355,7 +378,8 @@ public final class ClassicalStudioActivity extends Activity {
                     }
                     if(preview!=null&&!preview.isRecycled())preview.recycle();
                     preview=ready;
-                    figure=false;activeMode=PhotoPainter.Mode.PHOTO;
+                    figure=false;
+                    activeMode=preserveMode?requestedMode:PhotoPainter.Mode.PHOTO;
                     showSelection();
                 });
             }catch(Exception|OutOfMemoryError error){
