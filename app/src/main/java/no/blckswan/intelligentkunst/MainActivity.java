@@ -37,6 +37,8 @@ import java.util.concurrent.Executors;
 
 import no.blckswan.intelligentkunst.core.ArtDirector;
 import no.blckswan.intelligentkunst.core.Artwork;
+import no.blckswan.intelligentkunst.core.CritiqueReport;
+import no.blckswan.intelligentkunst.core.DailyEdition;
 import no.blckswan.intelligentkunst.render.RenderEngine;
 import no.blckswan.intelligentkunst.storage.ArtArchive;
 import no.blckswan.intelligentkunst.ui.ArtworkView;
@@ -58,6 +60,7 @@ public final class MainActivity extends Activity {
     private TextView createButton, evolveButton, likeButton, exportButton, archiveButton;
     private LinearLayout top, bottom;
     private boolean exporting=false;
+    private boolean theaterMode=false;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -76,7 +79,8 @@ public final class MainActivity extends Activity {
         FrameLayout root=new FrameLayout(this);
         root.setBackgroundColor(0xFF050609);
         gallery=new ArtworkView(this);
-        gallery.setContentDescription("Generativt kunstverk. Berør lerretet for å flytte lyset.");
+        gallery.setContentDescription("Generativt kunstverk. Berør for lys. Trykk for fullskjerm.");
+        gallery.setOnClickListener(v->toggleTheater());
         root.addView(gallery,new FrameLayout.LayoutParams(-1,-1));
 
         top=new LinearLayout(this);top.setOrientation(LinearLayout.VERTICAL);
@@ -212,32 +216,64 @@ public final class MainActivity extends Activity {
         title.setText(next.title());
         narration.setText(next.style.thought);
         status.setText("42 SKISSER VURDERT   ·   ESTETISK HEURISTIKK "
-            + Math.round(next.score*100) + "/100");
+            + Math.round(next.score*100) + "/100"
+            + (next.hasParent ? "   ·   FRA " + String.format(Locale.ROOT,"%016X",next.parentSeed).substring(0,6) : ""));
         edition.setText("ATELIER 001     /     VERK " + archive.recent().size() + " · UTEN SKY");
-        likeButton.setText("♡  LÆR");
+        likeButton.setText(archive.isSaved(next) ? "♥  LÆRT" : "♡  LÆR");
     }
     private void like(){
         if(artwork==null)return;
-        archive.teach(artwork);
+        boolean learned=archive.teach(artwork);
         likeButton.setText("♥  LÆRT");
-        shortToast("Smaken din er lagret lokalt. Verket er i samlingen.");
+        shortToast(learned ? "Smaken din er lagret lokalt. Verket er i samlingen."
+                           : "Dette verket har allerede lært kunstneren noe.");
     }
 
     private void showDnaMenu(){
         new AlertDialog.Builder(this).setTitle("KUNSTENS DNA")
-            .setItems(new String[]{"Kopier verket som DNA", "Importer et DNA", "Hvordan tenker kunstneren?"},
+            .setItems(new String[]{"Dagens verk · samme for alle (UTC)", "Kunstnerens egenkritikk",
+                "Kopier verket som DNA", "Importer et DNA", "Om eksperimentet"},
                 (d,which)->{
-                    if(which==0&&artwork!=null){
+                    if(which==0)dailyEdition();
+                    else if(which==1)showCritique();
+                    else if(which==2&&artwork!=null){
                         ClipboardManager clips=(ClipboardManager)getSystemService(Context.CLIPBOARD_SERVICE);
                         clips.setPrimaryClip(ClipData.newPlainText("Kunst-DNA",artwork.encode()));
                         shortToast("DNA kopiert. Dette kan gjenskape verket.");
-                    }else if(which==1)importDna();else if(which==2)about();
+                    }else if(which==3)importDna();
+                    else if(which==4)about();
                 }).show();
+    }
+
+    private void dailyEdition(){
+        long utcDay=Math.floorDiv(System.currentTimeMillis(),86_400_000L);
+        show(DailyEdition.ofUtcDay(utcDay),true);
+        shortToast("Dagens original: samme DNA på alle enheter, uten internett.");
+    }
+
+    private void showCritique(){
+        if(artwork==null)return;
+        CritiqueReport report=CritiqueReport.evaluate(artwork,archive.recent(),archive.taste());
+        new AlertDialog.Builder(this).setTitle("Kunstnerens egenkritikk")
+            .setMessage("SCORE DA VERKET BLE VALGT: " + Math.round(artwork.score*100) + "/100\n\n"
+                + report.explain() + "\n\n"
+                + (artwork.hasParent ? "EVOLVERT FRA: " + String.format(Locale.ROOT,"%016X",artwork.parentSeed)
+                   + "\nGENERASJON: " + artwork.generation + "\n\n" : "")
+                + "Ny vurdering bruker gjeldende samling og smak. Tallene er åpne, programmerte "
+                + "heuristikker, ikke en kunstig intelligens som ser eller forstår bildet.")
+            .setPositiveButton("Tilbake",null).show();
+    }
+
+    private void toggleTheater(){
+        theaterMode=!theaterMode;
+        top.setVisibility(theaterMode?View.GONE:View.VISIBLE);
+        bottom.setVisibility(theaterMode?View.GONE:View.VISIBLE);
+        if(theaterMode)shortToast("UTSTILLINGSMODUS · trykk på bildet for å gå tilbake");
     }
     private void importDna(){
         EditText input=new EditText(this);input.setSingleLine(false);
         input.setMaxLines(4);input.setTextSize(13);
-        input.setHint("1:SEED:STYLE:PALETTE:...");
+        input.setHint("1:SEED:STYLE:... eller 2:SEED:...:PARENT");
         FrameLayout wrap=new FrameLayout(this);wrap.setPadding(dp(20),0,dp(20),0);
         wrap.addView(input,new FrameLayout.LayoutParams(-1,-2));
         new AlertDialog.Builder(this).setTitle("Importer DNA")
