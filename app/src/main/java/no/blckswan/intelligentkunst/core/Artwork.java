@@ -10,7 +10,8 @@ public final class Artwork {
         ORBIT("BANER", "Tyngdekraften er kun et forslag"),
         TERRAIN("TOPOGRAFI", "Et landskap som aldri fantes"),
         WEAVE("VEV", "Orden på grensen til kaos"),
-        PRISM("PRISME", "Geometrien drømmer i farger");
+        PRISM("PRISME", "Geometrien drømmer i farger"),
+        FABLE("FORTELLING", "Et motiv, et spørsmål og en verden utenfor rammen");
 
         public final String label;
         public final String thought;
@@ -76,11 +77,17 @@ public final class Artwork {
     public int[] colors() { return PALETTES[palette].clone(); }
     public String id() { return String.format(Locale.ROOT, "%016X", seed); }
     public String title() {
+        if(style == Style.FABLE) return StoryPlan.title(seed);
         String[] first = {"Stillheten", "Det uferdige", "Et ekko", "Mellomrom", "Tyngdeløs", "Den siste", "Nattens", "Uten kart", "Lysbrudd", "Uten navn", "Forskyvning", "Under huden"};
         String[] last = {"arkitektur", "av morgendagen", "i bevegelse", "av ingenting", "horisont", "som puster", "paradoks", "av lys", "i et annet univers", "tilfeldighet", "balanse", "etter stormen"};
         int a = (int) Long.remainderUnsigned(seed, first.length);
         int b = (int) Long.remainderUnsigned(Long.rotateRight(seed, 23), last.length);
         return first[a] + " " + last[b];
+    }
+
+    /** This is a human-authored visual prompt derived from the artwork DNA. */
+    public String intention() {
+        return style == Style.FABLE ? StoryPlan.intention(seed) : style.thought;
     }
 
     /** Compact, versioned record for permanent offline storage. No Java serialization. */
