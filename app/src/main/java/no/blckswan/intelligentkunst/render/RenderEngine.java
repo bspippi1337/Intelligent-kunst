@@ -21,6 +21,10 @@ public final class RenderEngine {
 
     public void draw(Canvas canvas, int width, int height, Artwork art) {
         if (art == null || width < 1 || height < 1) return;
+        if (art.style == Artwork.Style.FABLE) {
+            new StoryPainter().draw(canvas, width, height, art);
+            return;
+        }
         canvas.save();
         canvas.clipRect(0, 0, width, height);
         int[] colors = art.colors();
