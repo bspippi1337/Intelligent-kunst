@@ -126,7 +126,7 @@ public final class MainActivity extends Activity {
         dna.setOnClickListener(v->showDnaMenu());
         brandRow.addView(dna,new LinearLayout.LayoutParams(dp(90),dp(40)));
 
-        edition=text("ATELIER 004     /     LOKALT + VALGFRI AI",9,ACID,Typeface.NORMAL);
+        edition=text("ATELIER 005     /     LOKALT + VALGFRI AI",9,ACID,Typeface.NORMAL);
         edition.setLetterSpacing(.13f);edition.setPadding(0,dp(21),0,0);
         top.addView(edition);
 
@@ -422,7 +422,7 @@ public final class MainActivity extends Activity {
         status.setText((next.style==Artwork.Style.AIGUIDE ? "BILDEANALYSE   " : "VERKETS SELEKSJONSSCORE   ")
             + Math.round(next.score*100) + "/100"
             + (next.hasParent ? "   ·   FRA " + String.format(Locale.ROOT,"%016X",next.parentSeed).substring(0,6) : ""));
-        edition.setText("ATELIER 004     /     VERK " + archive.recent().size()
+        edition.setText("ATELIER 005     /     VERK " + archive.recent().size()
             + (next.style==Artwork.Style.AIGUIDE ? " · AIGUIDE" : " · LOKALT"));
         likeButton.setText(archive.isSaved(next) ? "♥  LÆRT" :
             archive.isRejected(next) ? "✕  AVVIST" : "♡  LÆR");
