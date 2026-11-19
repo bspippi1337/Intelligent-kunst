@@ -53,7 +53,7 @@ public final class ClassicalStudioActivity extends Activity {
     private Uri imageUri;
     private long figureSeed=2712L;
     private boolean figure=true,exporting=false;
-    private PhotoPainter.Mode activeMode=PhotoPainter.Mode.OIL;
+    private PhotoPainter.Mode activeMode=PhotoPainter.Mode.CHARCOAL;
 
     @Override protected void onCreate(Bundle state){
         super.onCreate(state);
@@ -116,7 +116,7 @@ public final class ClassicalStudioActivity extends Activity {
         sourceButton.setOnClickListener(v->openPhoto());
         figureButton.setOnClickListener(v->{
             revision.incrementAndGet();
-            figure=true;activeMode=PhotoPainter.Mode.OIL;
+            figure=true;activeMode=PhotoPainter.Mode.CHARCOAL;
             subjectLabel.setText("AKADEMISK AKT / STUDIO");
             showSelection();
         });
