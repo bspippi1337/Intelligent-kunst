@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.0 · Offline neural handoff · 2026-11-19
+
+- Add a genuine local text-to-image path via explicitly installed Local Diffusion (stable-diffusion.cpp), without API keys or cloud services.
+- Copy editable user prompt to Android clipboard, launch the known public Android package by explicit intent and show a verified upstream download link if not installed.
+- Reimport generated image via the existing Android system photo picker and use the existing real-pixel rendering and photo studies.
+- Show dynamically detected device total RAM and explain model resource requirements, separate app permissions, and external model downloads.
+- Debug-only emulator fixture captures the real model handoff screen without any installed neural model.
+- Retain app-level zero INTERNET permission and mandatory CI audit.
+
+**Honest scope:** A real local diffusion runtime exists in the separate installed application, not in this APK. End-to-end native photo generation on the user's physical device has not been verified.
+
 ## 0.6.1 · Visible-art review fixes · 2026-11-19
 
 - Correct adult figure head-to-body ratio and layered anatomy, with proper dark hair material and subtler highlights.
