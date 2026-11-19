@@ -234,7 +234,7 @@ public final class MainActivity extends Activity {
                     createButton.setEnabled(true);evolveButton.setEnabled(true);
                     createButton.setText("✳  SKAP NYTT");
                     show(result.artwork,true);
-                    status.setText("12 BILDER SETT  ·  KURATERT FRA PIKSLER  "
+                    status.setText(result.proposals + " BILDER SETT  ·  BILDE + KONSEPT-KRITIKK  "
                         + Math.round(result.artwork.score*100) + "/100");
                 });
             }catch(RuntimeException|OutOfMemoryError error){
