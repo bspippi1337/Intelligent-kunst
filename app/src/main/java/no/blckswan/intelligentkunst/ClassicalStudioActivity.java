@@ -53,6 +53,7 @@ public final class ClassicalStudioActivity extends Activity {
     private static final int BG=0xFF0E1415,FG=0xFFF4EBDD,ACCENT=0xFFCDA87B;
     private final ExecutorService worker=Executors.newSingleThreadExecutor();
     private final AtomicInteger revision=new AtomicInteger();
+    private final AtomicInteger paintRevision=new AtomicInteger();
     private final SecureRandom random=new SecureRandom();
     private StudioView stage;
     private TextView message,subjectLabel,sourceButton,figureButton,poseButton,saveButton,neuralButton;
@@ -356,8 +357,54 @@ public final class ClassicalStudioActivity extends Activity {
             message.setText(styles[activeMode.ordinal()]);
             subjectLabel.setText("DITT FOTO / LOKAL REFERANSE");
         }
-        stage.invalidate();
+        requestPreviewPaint();
     }
+    /**
+     * Figure rendering and reference-image brushwork run off the main thread.
+     * Only the last selected style is displayed. This also prevents long
+     * charcoal stroke sweeps from blocking touch events or screen rotation.
+     */
+    private void requestPreviewPaint(){
+        final int w=stage.getWidth(),h=stage.getHeight();
+        final int token=paintRevision.incrementAndGet();
+        if(w<1||h<1)return;
+        final Bitmap photo=figure?null:preview;
+        final boolean figureStudy=figure;
+        final long seed=figureSeed;
+        final PhotoPainter.Mode style=activeMode;
+        if(!figureStudy && (photo==null||photo.isRecycled())){
+            stage.setRendered(null);
+            return;
+        }
+        worker.execute(()->{
+            if(token!=paintRevision.get())return;
+            Bitmap rendered=null;
+            try{
+                // Render at viewport dimensions. PNG export independently
+                // decodes the full available source resolution off-thread.
+                rendered=Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888);
+                Canvas target=new Canvas(rendered);
+                if(figureStudy)drawFigure(target,w,h,seed,style);
+                else PhotoPainter.draw(target,w,h,photo,style,seed);
+                final Bitmap complete=rendered;
+                runOnUiThread(()->{
+                    if(isFinishing()||isDestroyed()||token!=paintRevision.get()){
+                        complete.recycle();return;
+                    }
+                    stage.setRendered(complete);
+                });
+            }catch(OutOfMemoryError|RuntimeException error){
+                if(rendered!=null&&!rendered.isRecycled())rendered.recycle();
+                // Avoid a stale/wrong-style preview, but don't crash or
+                // interfere with independently queued PNG exports.
+                runOnUiThread(()->{
+                    if(!isFinishing()&&!isDestroyed()&&token==paintRevision.get())
+                        stage.setRendered(null);
+                });
+            }
+        });
+    }
+
     private void openPhoto(){
         Intent picker=new Intent(Intent.ACTION_OPEN_DOCUMENT);
         picker.addCategory(Intent.CATEGORY_OPENABLE);
@@ -396,8 +443,12 @@ public final class ClassicalStudioActivity extends Activity {
                     if(isFinishing()||isDestroyed()||revision.get()!=token){
                         ready.recycle();return;
                     }
-                    if(preview!=null&&!preview.isRecycled())preview.recycle();
+                    Bitmap replaced=preview;
                     preview=ready;
+                    // Rendering is serialized on worker. Queue recycling
+                    // after existing paints so they never access freed pixels.
+                    if(replaced!=null&&replaced!=ready)
+                        worker.execute(()->{if(!replaced.isRecycled())replaced.recycle();});
                     figure=false;
                     activeMode=preserveMode?requestedMode:PhotoPainter.Mode.PHOTO;
                     showSelection();
@@ -498,19 +549,38 @@ public final class ClassicalStudioActivity extends Activity {
     }
 
     private final class StudioView extends View {
+        private Bitmap rendered;
+        private final Paint blit=new Paint(Paint.FILTER_BITMAP_FLAG|Paint.ANTI_ALIAS_FLAG);
         private StudioView(){super(ClassicalStudioActivity.this);}
+        private void setRendered(Bitmap ready){
+            Bitmap old=rendered;
+            rendered=ready;
+            if(old!=null&&old!=ready&&!old.isRecycled())old.recycle();
+            invalidate();
+        }
+        @Override protected void onSizeChanged(int w,int h,int oldW,int oldH){
+            super.onSizeChanged(w,h,oldW,oldH);
+            requestPreviewPaint();
+        }
         @Override protected void onDraw(Canvas canvas){
-            int w=getWidth(),h=getHeight();
-            if(w==0||h==0)return;
-            if(figure)drawFigure(canvas,w,h,figureSeed,activeMode);
-            else if(preview!=null&&!preview.isRecycled())
-                PhotoPainter.draw(canvas,w,h,preview,activeMode,figureSeed);
-            else canvas.drawColor(BG);
+            canvas.drawColor(BG);
+            if(rendered!=null&&!rendered.isRecycled())
+                canvas.drawBitmap(rendered,null,
+                    new android.graphics.Rect(0,0,getWidth(),getHeight()),blit);
         }
     }
     @Override protected void onDestroy(){
-        revision.incrementAndGet();worker.shutdownNow();
-        if(preview!=null&&!preview.isRecycled())preview.recycle();
-        preview=null;super.onDestroy();
+        revision.incrementAndGet();
+        paintRevision.incrementAndGet();
+        // Queue the reference bitmap's cleanup AFTER every in-flight paint.
+        // shutdownNow/recycle-on-UI could otherwise use freed Android pixels.
+        final Bitmap photo=preview;
+        preview=null;
+        if(photo!=null)worker.execute(()->{
+            if(!photo.isRecycled())photo.recycle();
+        });
+        worker.shutdown();
+        stage.setRendered(null);
+        super.onDestroy();
     }
 }
