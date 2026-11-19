@@ -35,6 +35,14 @@ Ingen av motivene velges på grunnlag av brukerhistorikk eller personlige refera
 
 **Ærlig avgrensning:** dette er fremdeles en begrenset *regelbasert* oppfinner med bildepikselanalyse. Det er ikke en trent, åpent assosierende bildemodell, og pixel-statistikk alene kan ikke måle kunstnerisk kvalitet. Hvis målet er et virkelig overraskende kunstnersubjekt, må videre versjoner øke handlingsrom, kritikk og læring utover disse faste byggesteinene.
 
+## Atelier 008 · Referansebasert, anatomisk og strukturbevisst kunst
+
+**Olje** gjør mer enn å legge tilfeldige penselstrøk over et foto. En lokal Sobel-analyse finner faktiske lyskonturer; på tre strøkstørrelser blir maling lagt langs formene med farger hentet fra kildebildet. **Kull** bruker lys- og skyggefeltene til å bygge opp konturer og krysskravering. Behandlingen foregår helt offline, uten bildegenerering fra en server.
+
+For å holde Android-grensesnittet raskt, rendres de tunge materialstrøkene på en egen arbeidstråd, med forhåndsvisning som bitmapcache. Raske stilskifter avbryter foreldede tegneoppdrag. Fotoets egentlige piksler ligger fortsatt under disse materielle tolkningene, og **FOTO**-modus beholder originalpikslene.
+
+Sobel-feltet har strenge minnegrenser og enhetstester for vinkelretning, jevn belysning og feilaktige inndata. Android-emulatoren fotograferer nå også olje- og kullmodus på et **merket syntetisk testmotiv**, ikke et falskt «ekte foto». Reell fotorealistisk bildeoppfinnelse krever fortsatt en lokal diffusjonsmodell gjennom funksjonen LOKAL AI.
+
 ## Atelier 007.2 · Renere arbeidsflate
 
 Den første Android-emulatorprøven av nevralknappen viste en altfor stor
