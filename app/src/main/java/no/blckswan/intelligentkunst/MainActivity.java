@@ -433,7 +433,8 @@ public final class MainActivity extends Activity {
         if(artwork==null)return;
         boolean remote=artwork.style==Artwork.Style.AIGUIDE;
         boolean learned=archive.teach(artwork);
-        likeButton.setText(remote?"♥  LAGRET":"♥  LÆRT");
+        if(learned)likeButton.setText(remote?"♥  LAGRET":"♥  LÆRT");
+        else if(archive.isRejected(artwork))likeButton.setText("✕  AVVIST");
         shortToast(learned
             ? remote ? "Lagret i samlingen. Dette trener ikke den eksterne modellen."
                      : "Smaken din er lagret lokalt. Verket er i samlingen."
