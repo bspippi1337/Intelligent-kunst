@@ -62,7 +62,7 @@ gradle :app:assembleDebug :app:testDebugUnitTest
 Ren JVM-røykprøve av den kunstneriske beslutningsmotoren (ingen Android SDK nødvendig):
 
 ```bash
-./tools/test-core.sh
+sh ./tools/test-core.sh
 ```
 
 ## Arkitektur
