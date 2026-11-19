@@ -31,6 +31,32 @@ public final class PixelCriticTest {
         assertTrue(PixelCritic.difference(a,b)>=12);
         assertEquals(0,PixelCritic.difference(a,a));
     }
+    @Test public void tasteLearnsIdeasWithoutConfusingEverythingWithPalette() {
+        ArtDirector.Taste taste=new ArtDirector.Taste();
+        ArtDirector director=new ArtDirector();
+        Artwork loved=director.create(456L,java.util.Collections.emptyList(),taste);
+        StoryPlan.Idea favorite=StoryPlan.generate(loved.seed);
+        Artwork counterexample=null;
+        for(long seed=100L;seed<5000;seed++) {
+            Artwork alt=director.create(seed,java.util.Collections.emptyList(),new ArtDirector.Taste());
+            StoryPlan.Idea other=StoryPlan.generate(alt.seed);
+            if(other.object!=favorite.object && other.proposition!=favorite.proposition
+                && alt.palette==loved.palette) {
+                counterexample=alt;break;
+            }
+        }
+        assertNotNull("need contrasting ideas with same palette",counterexample);
+        for(int k=0;k<9;k++)taste.like(loved);
+        assertTrue("subject+premise taste must matter",
+            taste.reward(loved)>taste.reward(counterexample));
+        assertEquals(9,taste.objectVotes()[favorite.object.ordinal()]);
+        assertEquals(9,taste.propositionVotes()[favorite.proposition.ordinal()]);
+        ArtDirector.Taste restored=new ArtDirector.Taste();
+        restored.load(taste.styleVotes(),taste.paletteVotes(),
+            taste.objectVotes(),taste.propositionVotes());
+        assertEquals(taste.reward(loved),restored.reward(loved),0);
+    }
+
     @Test public void backwardsCompatibleFamilyHasNarrativeIntent() {
         for(int i=0;i<500;i++) {
             Artwork art=new ArtDirector().create(i,java.util.Collections.emptyList(),new ArtDirector.Taste());
