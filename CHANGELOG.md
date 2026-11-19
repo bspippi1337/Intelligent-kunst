@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.8.0 · Actual brushwork from photographic contours · 2026-11-19
+
+- **Oil:** replace arbitrary horizontal strokes with three deterministic scales of image-colour brushwork following actual Sobel luminance contours. Preserve the underlying real image to prevent invented details.
+- **Charcoal:** add graphite contour strokes and density-dependent crosshatching derived from source brightness, instead of just a monochrome photo filter.
+- Add small pure-Java, bounded `ImageStructure` for Sobel gradients and contour directions (max 512x512). Unit tests cover flat colours, orthogonal edges, input validation, immutability.
+- Render expensive preview strokes on a single background worker. UI now displays a bitmap cache rather than painting tens of thousands of marks on every frame. Rapid style switches coalesce via generation tokens.
+- Recycle previous reference bitmaps only after queued rendering has finished, preventing use-after-recycle errors.
+- Bound brush grids for extreme source-image aspect ratios.
+- Add two emulator capture fixtures exercising actual oil/charcoal engines with a clearly labelled **synthetic** still-life reference. Neither fixture is presented as a real photograph or neural image.
+- Keep full photographic reproduction, local gallery, classical figure studies and the external Local Diffusion model handoff unchanged; the Android APK still requests no network access.
+
+**Scope:** This is algorithmic, structure-aware, **reference-based physical-media interpretation**, not neural synthetic-photo generation. True generative inference remains delegated to an independently installed local model app.
+
 ## 0.7.2 · Compact neural handoff · 2026-11-19
 
 - Actual emulator review caught a large, visually crowded local diffusion dialog.
