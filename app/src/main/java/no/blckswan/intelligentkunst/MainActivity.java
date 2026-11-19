@@ -92,12 +92,13 @@ public final class MainActivity extends Activity {
             && (getIntent().getBooleanExtra("ik_classical_fixture",false)
                 || getIntent().getBooleanExtra("ik_neural_fixture",false)
                 || getIntent().hasExtra("ik_photo_fixture"))){
-            startActivity(new Intent(this,ClassicalStudioActivity.class)
+            Intent fixture=new Intent(this,ClassicalStudioActivity.class)
                 .putExtra("ik_classical_fixture",true)
                 .putExtra("ik_neural_fixture",
-                    getIntent().getBooleanExtra("ik_neural_fixture",false))
-                .putExtra("ik_photo_fixture",
-                    getIntent().getStringExtra("ik_photo_fixture")));
+                    getIntent().getBooleanExtra("ik_neural_fixture",false));
+            String photoFixture=getIntent().getStringExtra("ik_photo_fixture");
+            if(photoFixture!=null)fixture.putExtra("ik_photo_fixture",photoFixture);
+            startActivity(fixture);
             return;
         }
         Artwork last=archive.current();
