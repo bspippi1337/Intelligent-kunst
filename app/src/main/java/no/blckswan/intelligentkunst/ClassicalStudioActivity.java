@@ -151,6 +151,8 @@ public final class ClassicalStudioActivity extends Activity {
         np.topMargin=dp(9);
         controls.addView(neuralButton,np);
         neuralButton.setOnClickListener(v->openLocalNeuralDialog());
+        neuralButton.setOnLongClickListener(v->{showLocalNeuralHelp();return true;});
+        neuralButton.setContentDescription("Åpne lokal bildegenerering. Hold lenge for RAM- og modellinformasjon.");
 
         saveButton=button("↓  EKSPORTER KUNSTVERK SOM PNG",true);
         LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,dp(50));
@@ -216,8 +218,8 @@ public final class ClassicalStudioActivity extends Activity {
     private void openLocalNeuralDialog(){
         EditText prompt=new EditText(this);
         prompt.setTextSize(13);
-        prompt.setMinLines(3);
-        prompt.setMaxLines(6);
+        prompt.setMinLines(2);
+        prompt.setMaxLines(4);
         prompt.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE);
         prompt.setText("Photorealistic fine art portrait, adult life model, "
             +"natural human anatomy, soft atelier window light, "
@@ -230,25 +232,22 @@ public final class ClassicalStudioActivity extends Activity {
         ActivityManager.MemoryInfo memory=new ActivityManager.MemoryInfo();
         am.getMemoryInfo(memory);
         long ramGiB=Math.round(memory.totalMem/1073741824.0);
-        String memoryNote="En SD1.5-modell ved 512×512 bruker omtrent 1,9 GB "
-            +"RAM under inferens med Q4 og optimalisering, pluss Android og "
-            +"andre apper. Telefonen rapporterer ca. "+ramGiB+" GiB total RAM. "
-            +"Start gjerne ved 256×256 eller 384×384.";
+        String memoryNote="Telefon: ca. "+ramGiB+" GiB RAM. "
+            +"Start ved 256–384 px; ekte diffusjon krever ekstra modellfiler.";
         new AlertDialog.Builder(this)
-            .setTitle("NEVRAL KUNST · LOKAL DIFFUSJON")
-            .setMessage("Dette åpner den SEPARATE Android-appen Local Diffusion, "
-                +"som kjører ekte stable-diffusion.cpp-modeller på enheten. "
-                +"Den krever installerte modellvekter og kan bruke mye RAM og tid. "
-                +"Vår app sender ingen data til nett og kjører ingen egen diffusjonsmodell.\n\n"
-                +memoryNote+"\n\nDen eksterne appen ber om bred tilgang til lagring. "
-                +"Vurder det før du installerer. Når bildet er generert og lagret, "
-                +"kom tilbake og trykk ÅPNE FOTO.")
+            .setTitle("NEVRAL KUNST · LOKALT")
+            .setMessage("Ekte AI-bilder lages i den separate appen "
+                +"Local Diffusion, ikke inne i Intelligent Kunst. "
+                +"Installer først en modell.\n"+memoryNote
+                +"\n\nBildet hentes tilbake med ÅPNE FOTO. "
+                +"Ekstern app ber om bred filtilgang. "
+                +"Hold LOKAL AI inne for detaljer.")
             .setView(wrap)
             .setNegativeButton("Avbryt",null)
-            .setNeutralButton("HENT LOKAL DIFFUSJON",(dialog,which)->{
+            .setNeutralButton("INSTALLER",(dialog,which)->{
                 openLocalDiffusionReleases();
             })
-            .setPositiveButton("ÅPNE LOKAL AI",(dialog,which)->{
+            .setPositiveButton("ÅPNE",(dialog,which)->{
                 ClipboardManager cb=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
                 cb.setPrimaryClip(ClipData.newPlainText("Lokal kunstprompt",
                     prompt.getText().toString().trim()));
@@ -271,6 +270,27 @@ public final class ClassicalStudioActivity extends Activity {
                         .show();
                 }
             }).show();
+    }
+
+    private void showLocalNeuralHelp(){
+        new AlertDialog.Builder(this)
+            .setTitle("Om lokal AI og RAM")
+            .setMessage("Local Diffusion er en separat Android-app basert på "
+                +"stable-diffusion.cpp. Intelligent Kunst inneholder ikke "
+                +"modellvekter eller egen nevral inferens. "
+                +"SD 1.5 ved 512×512 kan bruke rundt 1,9 GB RAM med Q4, "
+                +"i tillegg til Android og andre apper. Ytelse varierer.\n\n"
+                +"Installer en lovlig lisensiert modell, gjerne "
+                +"kvantisert. Den eksterne appen kan be om tilgang til alle "
+                +"filer. Gjennomgå dette før installasjon. "
+                +"Nedlasting av app/modell kan kreve nett i en ekstern app, "
+                +"men Intelligent Kunst har ingen INTERNET-tillatelse.\n\n"
+                +"Prompten kopieres til Androids systemutklippstavle. "
+                +"Ikke legg inn hemmeligheter. "
+                +"Importer bare et ferdig bilde du selv velger.")
+            .setNegativeButton("Lukk",null)
+            .setPositiveButton("Kilde / installasjon",(d,w)->openLocalDiffusionReleases())
+            .show();
     }
 
     private void openLocalDiffusionReleases(){
