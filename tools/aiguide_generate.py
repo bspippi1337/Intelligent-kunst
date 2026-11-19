@@ -153,7 +153,7 @@ def generate(prompt, model):
     except ImportError as exc:
         raise RuntimeError(
             "Install original package first: pip install git+https://github.com/"
-            "bspippi1337/aiguide-dev.git@c55f658610a0bb27f90c75619510dc8ad5c36a2f"
+            "bspippi1337/aiguide-dev.git@92609d71e6c8cb7b57be640d042b6148f9baf485"
         ) from exc
     instructions = (
         "Create a visually arresting ORIGINAL art composition unrelated to previous "
