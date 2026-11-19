@@ -12,6 +12,8 @@ public final class AiguideScene {
     public static String validate(String raw) throws JSONException {
         if(raw==null||raw.length()>28000)throw new JSONException("Scene too large");
         JSONObject input=new JSONObject(raw);
+        if(input.optInt("version",-1)!=1)
+            throw new JSONException("Unsupported scene version");
         String title=text(input,"title",1,76);
         String intent=text(input,"intent",1,240);
         String background=color(input.getString("background"));
