@@ -198,7 +198,7 @@ public final class ClassicalStudioActivity extends Activity {
                 try{imageUri=Uri.parse(uriText);loadPhoto(imageUri,true);}
                 catch(Exception error){figure=true;}
             }
-        }else if(getIntent().hasExtra("ik_photo_fixture") &&
+        }else if(getIntent().getStringExtra("ik_photo_fixture")!=null &&
                 (getApplicationInfo().flags &
                     android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE)!=0){
             preview=syntheticStillLife();
