@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.2 · Compact neural handoff · 2026-11-19
+
+- Actual emulator review caught a large, visually crowded local diffusion dialog.
+- Reduce the normal dialog to a short two-to-four-line prompt, relevant RAM note and three compact actions: INSTALLER, AVBRYT, ÅPNE.
+- Detailed external-app permissions, memory and model licensing information is still available by long-pressing the local AI action.
+- Preserve all previous 0.7.1 responsive layout and state restoration work.
+
 ## 0.7.1 · Responsive atelier · 2026-11-19
 
 - Keep the drawing canvas visible on compact and landscape Android screens.
