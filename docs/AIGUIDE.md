@@ -62,6 +62,29 @@ logging. The native Android path is a **port**, not a Python runtime or
 subprocess running inside the APK. These are separate, explicitly documented
 paths to the same bounded scene format.
 
+## Visual grammar extensions (0.5.0)
+
+The JSON scene keeps version 1 for compatibility. Existing scenes remain valid.
+
+A path element has kind "path", a mode of "fill" or "stroke", and 3 to 64 commands.
+Commands use op "M" (move), "L" (line), "Q" (quadratic curve), "C" (cubic curve)
+and "Z" (close). A filled path must end in Z. A stroked path can remain open.
+Coordinates and control points are bounded, and only one initial M is accepted.
+
+Each vector element may also contain an optional gradient:
+
+- Linear: type, start/end colours, and normalized x1,y1,x2,y2.
+- Radial: type, start/end colours, normalized cx,cy, and positive radius r.
+
+Colours must be six-digit hex RGB; no external images, SVG scripts or executable
+payloads are accepted. The validator strips unknown keys rather than forwarding
+them to the renderer.
+
+A complete real scene, containing several custom closed curves and both gradient
+types, is in [examples/expressive-vector-scene.json](../examples/expressive-vector-scene.json).
+In Android select DNA / ? and then "Importer AI-bildemanus" to draw it without
+an API key. New path scenes require Android 0.5.0 or later.
+
 ## Scene contract
 
 ```json
