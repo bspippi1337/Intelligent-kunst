@@ -1,7 +1,7 @@
 # aiguide-dev → Intelligent Kunst
 
 Source: [bspippi1337/aiguide-dev](https://github.com/bspippi1337/aiguide-dev), pinned at
-`c55f658610a0bb27f90c75619510dc8ad5c36a2f`. MIT licensed; attribution
+`92609d71e6c8cb7b57be640d042b6148f9baf485`. MIT licensed; attribution
 and license: [third_party/aiguide-dev-LICENSE](../third_party/aiguide-dev-LICENSE).
 
 ## What is actually reused
@@ -47,7 +47,7 @@ generated `aiguide` scene.
 ## Actual Python library on Termux / Linux
 
 ```sh
-python -m pip install 'git+https://github.com/bspippi1337/aiguide-dev.git@c55f658610a0bb27f90c75619510dc8ad5c36a2f'
+python -m pip install 'git+https://github.com/bspippi1337/aiguide-dev.git@92609d71e6c8cb7b57be640d042b6148f9baf485'
 export OPENAI_API_KEY='YOUR_KEY_HERE'
 python tools/aiguide_generate.py "A newly invented work about an impossible material" --clipboard
 ```
