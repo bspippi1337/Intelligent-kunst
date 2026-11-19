@@ -79,6 +79,8 @@ Fargepaletter, komposisjon, tetthet, asymmetri og tilfeldig frø er med i verket
 
 ## Last ned og kjør
 
+**Android LAB-installasjon:** Den automatiske debug-APK-en bruker eget pakkenavn `no.blckswan.intelligentkunst.lab` og heter **Intelligent Kunst LAB** i appmenyen. Den installeres ved siden av tidligere Intelligent Kunst-utgaver i stedet for å erstatte dem. Dermed står eksisterende samling urørt. LAB har sin egen isolerte samling og skal ikke forveksles med en produksjonssignert release.
+
 Gå til [Actions → Android CI](https://github.com/bspippi1337/Intelligent-kunst/actions/workflows/android.yml), åpne en vellykket kjøring og last ned artefakten **intelligent-kunst-debug-apk**. Dette er en debug-signert test-APK, ikke en Play Store-signert produksjonsrelease. Installer APK-en på Android 10 eller nyere.
 
 Bygg lokalt med Android Studio eller Gradle 8.9, JDK 17 og Android SDK Platform 35:
