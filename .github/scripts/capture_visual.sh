@@ -37,4 +37,13 @@ adb shell am start -n no.blckswan.intelligentkunst.lab/no.blckswan.intelligentku
 sleep 9
 adb exec-out screencap -p > visual/study-classical-figure.png
 test -s visual/study-classical-figure.png
+
+# Capture the genuine external-model handoff. The emulator intentionally has
+# no model application or weights installed and makes NO network requests.
+adb shell am force-stop no.blckswan.intelligentkunst.lab
+adb shell am start -n no.blckswan.intelligentkunst.lab/no.blckswan.intelligentkunst.MainActivity \
+    --ez ik_neural_fixture true
+sleep 6
+adb exec-out screencap -p > visual/study-local-neural-handoff.png
+test -s visual/study-local-neural-handoff.png
 sha256sum visual/*.png
