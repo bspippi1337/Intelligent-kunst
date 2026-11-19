@@ -10,367 +10,395 @@ import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.Typeface;
 
+import java.util.Locale;
 import java.util.SplittableRandom;
 
 import no.blckswan.intelligentkunst.core.Artwork;
 import no.blckswan.intelligentkunst.core.StoryPlan;
 
 /**
- * Deliberate, subject-led illustration in the tradition of limited-palette
- * relief prints, book covers and theatrical set design.
+ * Conceptual studies of everyday objects under impossible physical rules.
  *
- * Four authored narrative archetypes. The genome controls viewpoint, weather,
- * focus, placement and mark-making; it never merely rearranges screensaver lines.
- * Pure Android Canvas, deterministic, offline, resolution independent.
+ * Seven consequences x eight ordinary subjects x three kinds of space.
+ * The painter never uses the user's history, songs, characters or associations.
+ * A concept must visibly do something to the subject, not merely title a pattern.
+ * Native Android Canvas, seeded, offline and resolution independent.
  */
 public final class StoryPainter {
-    private static final int[][] INKS={
-        {0xFFE7DEC9,0xFF22312C,0xFFC27A50,0xFF82998B,0xFFF4C88C},
-        {0xFF101C24,0xFFE9DFCC,0xFFDC9162,0xFF436570,0xFFFFD8A0},
-        {0xFFEADDCF,0xFF363833,0xFFB75844,0xFF859281,0xFFF6CA89},
-        {0xFFEEE7D7,0xFF29313D,0xFFAB6F63,0xFF819DAA,0xFFF8D49A},
-        {0xFF14212B,0xFFE9DBC5,0xFFBD8D64,0xFF485F65,0xFFFFD6A5},
-        {0xFFE8D9C6,0xFF46362E,0xFFBB6750,0xFF83918B,0xFFFFD48E}
+    private static final int[][] PAPER = {
+        {0xFFEEE5D3,0xFF1E2A29,0xFFB75E4B,0xFF74958D,0xFFF4CB83},
+        {0xFFF1E8DF,0xFF34313C,0xFFAB4E68,0xFF9B8FA6,0xFFDAAC75},
+        {0xFFEDEBDE,0xFF2C3939,0xFFBA7952,0xFF91A79C,0xFFECC69B},
+        {0xFFF5E9D6,0xFF1D303E,0xFFDE8265,0xFF95B2B9,0xFFF2DCA9},
+        {0xFFE6DDD6,0xFF333C35,0xFF986C52,0xFF9EAF9E,0xFFD8B77F},
+        {0xFFE8E5DA,0xFF292B37,0xFF9C698E,0xFF99A3AB,0xFFD4BF93},
+        {0xFFF3EDE1,0xFF30342E,0xFFB96D4E,0xFFA2AFA1,0xFFE9CA82},
+        {0xFFE9E0D2,0xFF303844,0xFFBF715D,0xFF94A8AD,0xFFE6C49E}
     };
-
-    private final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
+    private final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path path=new Path();
 
-    public void draw(Canvas canvas,int width,int height,Artwork art) {
-        if(art==null||width<=0||height<=0)return;
-        canvas.save();
-        canvas.clipRect(0,0,width,height);
-        canvas.scale(width,width);  // uniform scaling keeps fonts, suns and bodies undistorted
-        float h=(float)height/width;
-        int[] pal=INKS[Math.floorMod(art.palette,INKS.length)];
-        int paper=pal[0],ink=pal[1],rust=pal[2],mist=pal[3],light=pal[4];
+    public void draw(Canvas c,int width,int height,Artwork art) {
+        if(art==null||width<1||height<1)return;
+        float h=height/(float)width;
+        StoryPlan.Idea idea=StoryPlan.generate(art.seed);
+        int[] pal=PAPER[art.palette%PAPER.length];
+        int paper=pal[0], ink=pal[1], accent=pal[2], mist=pal[3], pale=pal[4];
         SplittableRandom rng=new SplittableRandom(art.seed);
-        reset();
-        p.setShader(new LinearGradient(0,0,.12f,h,
-            new int[]{paper,mix(paper,mist,.16f),paper},null,Shader.TileMode.CLAMP));
-        canvas.drawRect(0,0,1,h,p);p.setShader(null);
-        // The same composition can be daylight or nocturne, not neon gradients.
-        wash(canvas,.58f,.35f*h,.65f,light,.11f);
-        wash(canvas,.17f,.75f*h,.50f,rust,.055f);
-        switch(StoryPlan.scene(art.seed)){
-            case 0: lighthouse(canvas,h,ink,rust,mist,light,art,rng);break;
-            case 1: doorway(canvas,h,ink,rust,mist,light,art,rng);break;
-            case 2: tree(canvas,h,ink,rust,mist,light,art,rng);break;
-            default: whale(canvas,h,ink,rust,mist,light,art,rng);break;
-        }
-        etchedPaper(canvas,h,ink,paper,rng);
-        typography(canvas,h,art,ink,rust);
-        canvas.restore();
-    }
-
-    private void lighthouse(Canvas c,float h,int ink,int rust,int mist,int light,
-                            Artwork a,SplittableRandom r) {
-        float horizon=h*(.60f+(float)(a.drift-.5)*.065f);
-        float cx=.73f-(float)a.balance*.13f,cy=h*.29f;
-        sun(c,cx,cy,.126f,light,rust);
-        // Diagonal island mass and quiet open sea keep the focal tower readable.
-        paint(mist,175,Paint.Style.FILL,.001f);
-        path.reset();path.moveTo(0,horizon*.95f);
-        path.cubicTo(.21f,horizon*.78f,.35f,horizon*.91f,.49f,horizon*.98f);
-        path.cubicTo(.64f,horizon*1.04f,.89f,horizon*.89f,1,horizon*.99f);
-        path.lineTo(1,horizon+.06f);path.lineTo(0,horizon+.06f);path.close();c.drawPath(path,p);
-        // Sea as a few solid planes, not an all-over waveform.
-        paint(ink,220,Paint.Style.FILL,.001f);
-        path.reset();path.moveTo(0,horizon+.018f);
-        path.cubicTo(.30f,horizon+.005f,.55f,horizon+.028f,1,horizon+.005f);
-        path.lineTo(1,h);path.lineTo(0,h);path.close();c.drawPath(path,p);
-        paint(mist,150,Paint.Style.FILL,.001f);
-        path.reset();path.moveTo(0,horizon+.025f);
-        path.cubicTo(.25f,horizon-.015f,.47f,horizon+.03f,.58f,horizon+.03f);
-        path.lineTo(.52f,horizon+.11f);path.lineTo(0,horizon+.14f);path.close();c.drawPath(path,p);
-        float tx=.30f+(float)a.balance*.18f,foot=horizon+.018f,top=h*.30f;
-        // Beacon beam is an act of narrative attention.
-        paint(light,32,Paint.Style.FILL,.001f);
-        path.reset();path.moveTo(tx,top+.008f);
-        path.lineTo(.96f,h*.19f);path.lineTo(.96f,h*.39f);path.close();c.drawPath(path,p);
-        // Actual tower has a silhouette, light room, cap and a careful vertical rhythm.
-        paint(ink,255,Paint.Style.FILL,.001f);
-        polygon(c,new float[]{tx-.060f,foot,tx-.044f,top+.052f,tx+.037f,top+.052f,
-            tx+.058f,foot});
-        paint(rust,255,Paint.Style.FILL,.001f);
-        c.drawRect(tx-.051f,top+.055f,tx+.045f,top+.078f,p);
-        paint(ink,255,Paint.Style.FILL,.001f);
-        polygon(c,new float[]{tx-.075f,top+.05f,tx,top+.008f,tx+.072f,top+.05f});
-        c.drawRect(tx-.063f,top+.079f,tx+.059f,top+.091f,p);
-        paint(light,255,Paint.Style.FILL,.001f);
-        c.drawRect(tx-.034f,top+.053f,tx+.029f,top+.079f,p);
-        for(int i=0;i<3;i++){
-            float wy=top+.143f+i*.083f;
-            paint(light,205,Paint.Style.FILL,.001f);
-            c.drawRoundRect(new RectF(tx-.013f,wy,tx+.013f,wy+.025f),.004f,.004f,p);
-        }
-        paint(ink,255,Paint.Style.FILL,.001f); c.drawOval(new RectF(tx-.083f,foot-.019f,tx+.093f,foot+.026f),p);
-        // Engraved water is reserved for the foreground and reflected beacon.
-        for(int i=0;i<72;i++){
-            float y=horizon+.10f+(float)r.nextDouble()*(h-horizon-.18f);
-            float x=(float)r.nextDouble();
-            float len=.014f+(float)r.nextDouble()*.105f;
-            boolean reflection=Math.abs(x-tx)<.085f;
-            paint(reflection?light:mist,reflection?120:58,Paint.Style.STROKE,
-                reflection?.003f:.0018f);
-            c.drawLine(x,y,Math.min(1,x+len),y-(float)r.nextDouble()*.005f,p);
-        }
-        birds(c,.73f,h*.44f,ink,r,5);
-    }
-
-    private void doorway(Canvas c,float h,int ink,int rust,int mist,int light,
-                         Artwork a,SplittableRandom r) {
-        float base=h*.67f,doorX=.56f+(float)(a.balance-.5)*.17f;
-        sun(c,.19f,h*.31f,.082f,light,rust);
-        // Rocky masses lean inwards, framing the impossible opening.
-        paint(mist,155,Paint.Style.FILL,.001f);
-        polygon(c,new float[]{0,h*.43f,.19f,h*.36f,.36f,h*.47f,.34f,base,0,base});
-        paint(ink,245,Paint.Style.FILL,.001f);
-        polygon(c,new float[]{.85f,h*.30f,1,h*.38f,1,base,.81f,base,.78f,h*.48f});
-        polygon(c,new float[]{0,base,.36f,base,.23f,h*.89f,0,h});
-        polygon(c,new float[]{.75f,base,1,base,1,h,.80f,h*.85f});
-        // A painted glow creates negative space within a monumental arch.
-        wash(c,doorX,base-.19f,.28f,light,.42f);
-        float left=doorX-.105f,right=doorX+.105f,top=base-.39f;
-        paint(ink,255,Paint.Style.FILL,.001f);
-        path.reset();path.moveTo(left-.027f,base);
-        path.lineTo(left-.027f,top+.090f);
-        path.cubicTo(left-.03f,top-.055f,right+.032f,top-.055f,right+.027f,top+.09f);
-        path.lineTo(right+.027f,base);path.close();c.drawPath(path,p);
-        paint(light,255,Paint.Style.FILL,.001f);
-        path.reset();path.moveTo(left,base);
-        path.lineTo(left,top+.085f);
-        path.cubicTo(left,top-.013f,right,top-.013f,right,top+.085f);
-        path.lineTo(right,base);path.close();c.drawPath(path,p);
-        paint(rust,100,Paint.Style.FILL,.001f);
-        polygon(c,new float[]{right-.029f,base,right-.025f,top+.078f,right,top+.078f,right,base});
-        paint(ink,110,Paint.Style.STROKE,.003f);
-        c.drawLine(doorX,top+.017f,doorX,base,p);
-        // Perspective stairs: the human figure has somewhere to move.
-        for(int i=0;i<10;i++){
-            float t=i/10f,y=base+t*t*h*.235f;
-            float extent=.11f+.45f*t;
-            paint(ink,110-i*6,Paint.Style.STROKE,.0022f+i*.0002f);
-            c.drawLine(doorX-extent,y,doorX+extent,y,p);
-        }
-        // Tiny solitary human witness.
-        person(c,doorX-.20f,base+h*.105f,.033f,ink);
-        for(int i=0;i<24;i++){
-            float x=(float)r.nextDouble();
-            float y=h*.42f+(float)r.nextDouble()*.14f;
-            paint(mist,80,Paint.Style.STROKE,.0014f);
-            c.drawLine(x,y,x+.012f,y-.01f,p);
-        }
-        birds(c,.25f,h*.39f,ink,r,3);
-    }
-
-    private void tree(Canvas c,float h,int ink,int rust,int mist,int light,
-                      Artwork a,SplittableRandom r) {
-        float ground=h*.70f,tx=.61f+(float)(a.balance-.5)*.20f;
-        sun(c,.26f,h*.34f,.16f,light,rust);
-        paint(mist,154,Paint.Style.FILL,.001f);
-        path.reset();path.moveTo(0,ground-.095f);
-        path.cubicTo(.21f,ground-.16f,.37f,ground-.06f,.50f,ground-.105f);
-        path.cubicTo(.76f,ground-.20f,.87f,ground-.095f,1,ground-.11f);
-        path.lineTo(1,h);path.lineTo(0,h);path.close();c.drawPath(path,p);
-        paint(ink,252,Paint.Style.FILL,.001f);
-        path.reset();path.moveTo(0,ground+.14f);
-        path.cubicTo(.36f,ground-.01f,.65f,ground+.07f,1,ground-.02f);
-        path.lineTo(1,h);path.lineTo(0,h);path.close();c.drawPath(path,p);
-        // Woodcut trunk: taper + independent branch structure, not a radial flower.
-        float trunkTop=ground-h*.35f;
-        paint(ink,255,Paint.Style.FILL,.001f);
-        path.reset();path.moveTo(tx-.045f,ground+.04f);
-        path.cubicTo(tx-.060f,ground-h*.16f,tx-.005f,ground-h*.22f,tx-.018f,trunkTop);
-        path.lineTo(tx+.012f,trunkTop);
-        path.cubicTo(tx+.036f,ground-h*.21f,tx+.061f,ground-h*.12f,tx+.045f,ground+.04f);
-        path.close();c.drawPath(path,p);
-        // Curving branches have coherent growth direction and changing scale.
-        for(int b=0;b<22;b++){
-            float side=b%2==0?1:-1;
-            float origin=ground-h*(.12f+(b/22f)*.24f);
-            float spread=(.13f+(float)r.nextDouble()*.18f)*(1-b/45f);
-            float endX=tx+side*spread,endY=origin-h*(.08f+(float)r.nextDouble()*.13f);
-            paint(ink,240,Paint.Style.STROKE,.012f*(1-b/26f));
-            p.setStrokeCap(Paint.Cap.ROUND);
-            path.reset();path.moveTo(tx,origin);
-            path.cubicTo(tx+side*spread*.25f,origin-.065f,tx+side*spread*.6f,endY+.025f,endX,endY);
-            c.drawPath(path,p);
-            paint(rust,110,Paint.Style.STROKE,.0025f);
-            c.drawLine(endX,endY,endX+side*.045f,endY-.032f,p);
-        }
-        // Leaves as sparse clustered silhouettes with a deliberate empty halo.
-        for(int i=0;i<245;i++){
-            float angle=(float)r.nextDouble()*6.2831853f;
-            float radial=(float)Math.sqrt(r.nextDouble());
-            float x=tx+(float)Math.cos(angle)*radial*(.22f+(float)a.energy*.035f);
-            float y=trunkTop-.09f+(float)Math.sin(angle)*radial*h*.105f;
-            if(y>ground-h*.12f)continue;
-            float size=.0015f+(float)r.nextDouble()*.009f;
-            paint(i%5==0?rust:(i%3==0?light:ink),i%5==0?180:120+r.nextInt(135),
-                Paint.Style.FILL,.001f);
-            c.drawOval(new RectF(x-size,y-size*.5f,x+size,y+size*.5f),p);
-        }
-        person(c,.22f,ground+.075f,.027f,light);
-        paint(mist,80,Paint.Style.STROKE,.0015f);
-        for(int i=0;i<30;i++){
-            float x=(float)r.nextDouble();
-            float y=ground+.1f+(float)r.nextDouble()*(h-ground-.12f);
-            c.drawLine(x,y,x+.01f,y,p);
-        }
-    }
-
-    private void whale(Canvas c,float h,int ink,int rust,int mist,int light,
-                       Artwork a,SplittableRandom r) {
-        float sea=h*.69f;
-        sun(c,.73f,h*.29f,.145f,light,rust);
-        paint(mist,135,Paint.Style.FILL,.001f);
-        polygon(c,new float[]{0,sea-.10f,.26f,sea-.13f,.51f,sea-.095f,1,sea-.13f,1,sea+.015f,0,sea+.03f});
-        paint(ink,238,Paint.Style.FILL,.001f);
-        path.reset();path.moveTo(0,sea+.03f);
-        path.cubicTo(.26f,sea-.015f,.60f,sea+.03f,1,sea);
-        path.lineTo(1,h);path.lineTo(0,h);path.close();c.drawPath(path,p);
-        // Whale anatomy reads clearly at thumbnail scale: domed back, rostrum,
-        // narrowing tail stock, forked fluke and a ventral fin.
-        float wy=h*.43f+(float)(a.drift-.5)*h*.07f;
-        c.save();c.translate(.48f,wy);c.rotate((float)(a.balance-.5)*-13f);
-        paint(ink,255,Paint.Style.FILL,.001f);
-        path.reset();path.moveTo(-.35f,.005f);
-        path.cubicTo(-.28f,-.12f,-.02f,-.14f,.22f,-.065f);
-        path.cubicTo(.31f,-.035f,.32f,-.025f,.33f,-.025f);
-        path.lineTo(.43f,-.06f);
-        path.cubicTo(.48f,-.09f,.48f,-.035f,.42f,.005f);
-        path.cubicTo(.49f,.05f,.49f,.105f,.42f,.065f);
-        path.lineTo(.32f,.02f);
-        path.cubicTo(.18f,.11f,-.10f,.12f,-.28f,.067f);
-        path.cubicTo(-.35f,.057f,-.37f,.025f,-.35f,.005f);path.close();
-        c.drawPath(path,p);
-        // Attached flipper has an actual articulated shape.
-        path.reset();path.moveTo(.008f,.062f);
-        path.cubicTo(-.005f,.11f,-.11f,.245f,-.17f,.235f);
-        path.cubicTo(-.19f,.227f,-.065f,.085f,-.057f,.045f);
-        path.close();c.drawPath(path,p);
-        paint(light,240,Paint.Style.FILL,.001f);
-        c.drawCircle(-.247f,.005f,.007f,p);
-        paint(rust,160,Paint.Style.STROKE,.0015f);
-        path.reset();path.moveTo(-.27f,.038f);path.cubicTo(-.13f,.10f,.09f,.09f,.23f,.008f);c.drawPath(path,p);
+        p.reset();p.setAntiAlias(true);
+        c.save();
+        c.clipRect(0,0,width,height);
+        c.scale(width,width);
+        paper(c,h,paper,mist,ink,rng);
+        room(c,h,idea,ink,paper,mist,pale);
+        concept(c,h,idea,ink,paper,accent,mist,pale,rng);
+        texture(c,h,paper,ink,rng);
+        caption(c,h,art,idea,ink,accent);
         c.restore();
-        // A small boat down below is the scale cue and narrative counterpoint.
-        float bx=.20f,by=sea-.028f;
-        paint(rust,255,Paint.Style.FILL,.001f);
-        polygon(c,new float[]{bx-.056f,by,bx+.067f,by,bx+.037f,by+.025f,bx-.035f,by+.025f});
-        paint(light,230,Paint.Style.STROKE,.002f);
-        c.drawLine(bx,by,bx,by-.10f,p);
-        paint(light,190,Paint.Style.FILL,.001f);
-        polygon(c,new float[]{bx+.006f,by-.095f,bx+.062f,by-.013f,bx+.006f,by-.013f});
-        // A few precisely located wave marks, not a filling pattern.
-        for(int i=0;i<65;i++){
-            float x=(float)r.nextDouble();
-            float y=sea+.06f+(float)r.nextDouble()*(h-sea-.14f);
-            float len=.018f+(float)r.nextDouble()*.11f;
-            paint(i%6==0?rust:mist,65+i%4*15,Paint.Style.STROKE,.0017f);
-            c.drawLine(x,y,Math.min(1,x+len),y,p);
-        }
-        birds(c,.29f,h*.24f,ink,r,3);
     }
 
-    private void typography(Canvas c,float h,Artwork a,int ink,int rust) {
-        // A poster is an authored artifact. Top line and colophon act as framing,
-        // not a giant decorative brand overlay.
-        paint(ink,235,Paint.Style.FILL,.001f);
+    private void paper(Canvas c,float h,int paper,int mist,int ink,SplittableRandom rng){
+        fill(paper,255);
+        c.drawRect(0,0,1,h,p);
+        p.setShader(new LinearGradient(0,0,1,h,
+            new int[]{paper,tint(paper,mist,.13f),paper},null,Shader.TileMode.CLAMP));
+        c.drawRect(0,0,1,h,p);p.setShader(null);
+        // Grain never becomes the subject: quiet imperfection of paper/ink.
+        fill(ink,11);
+        for(int i=0;i<900;i++){
+            float x=(float)rng.nextDouble(),y=(float)rng.nextDouble()*h;
+            c.drawCircle(x,y,.0004f+(float)rng.nextDouble()*.0007f,p);
+        }
+    }
+
+    private void room(Canvas c,float h,StoryPlan.Idea idea,int ink,int paper,int mist,int pale){
+        float floor=h*.73f;
+        switch(idea.space) {
+            case WHITE_ROOM:
+                fill(mist,37);
+                quad(c,0,floor,1,floor-.034f,1,h,0,h);
+                stroke(ink,70,.0016f);
+                c.drawLine(0,floor,.99f,floor-.03f,p);
+                stroke(ink,35,.001f);
+                c.drawLine(.16f,h*.18f,.16f,floor,p);
+                break;
+            case NOCTURNE:
+                fill(ink,235);
+                c.drawRect(0,h*.17f,1,h*.85f,p);
+                glow(c,.49f,h*.47f,.40f,pale,.32f);
+                fill(paper,45);
+                quad(c,0,floor,1,floor,1,h*.85f,0,h*.85f);
+                stroke(pale,85,.0015f);
+                c.drawLine(.06f,floor,.94f,floor,p);
+                break;
+            case ARCHIVE:
+                stroke(ink,48,.0019f);
+                c.drawRect(.09f,h*.18f,.91f,h*.79f,p);
+                c.drawLine(.09f,floor,.91f,floor,p);
+                c.drawLine(.10f,h*.79f,.91f,h*.79f,p);
+                // Architecture is a datum, not an endless grid.
+                fill(mist,50);
+                c.drawRect(.12f,h*.2f,.14f,h*.73f,p);
+                c.drawRect(.86f,h*.2f,.88f,h*.73f,p);
+                break;
+        }
+    }
+
+    private void concept(Canvas c,float h,StoryPlan.Idea idea,
+                         int ink,int paper,int accent,int mist,int pale,SplittableRandom rng){
+        final float stageX=.51f+(float)(idea.displacement-.5)*.13f;
+        final float stageY=h*.505f+(float)(idea.openness-.5)*h*.028f;
+        final float size=(float)idea.scale*.52f;
+        // A single subject is large enough to read at thumbnail size.
+        // The selected physical impossibility changes its physical rendering.
+        c.save();
+        c.translate(stageX,stageY);
+        c.rotate((float)idea.lean*20f);
+        c.scale(size,size);
+        StoryPlan.ObjectKind o=idea.object;
+        switch(idea.proposition){
+            case INDEPENDENT_SHADOW:
+                c.save();c.translate(.35f,-.23f);
+                drawObject(c,o,ink,paper,accent,69,true);
+                c.restore();
+                stroke(accent,175,.003f);
+                p.setPathEffect(new android.graphics.DashPathEffect(new float[]{.011f,.013f},0));
+                c.drawLine(.04f,-.02f,.26f,-.17f,p);
+                p.setPathEffect(null);
+                drawObject(c,o,ink,paper,accent,255,false);
+                break;
+            case UNFINISHED:
+                drawObject(c,o,ink,paper,accent,255,false);
+                // The missing fragment is material negative space, bounded by a clear seam.
+                fill(paper,255);
+                quad(c,-.16f,-.05f,.16f,-.06f,.25f,.08f,-.18f,.10f);
+                stroke(accent,212,.006f);
+                c.drawLine(-.18f,.10f,.25f,.08f,p);
+                for(int i=0;i<7;i++){
+                    float x=-.16f+i*.063f;
+                    c.drawLine(x,.11f,x+.012f,.13f,p);
+                }
+                break;
+            case AFTERIMAGE:
+                for(int i=3;i>=1;i--){
+                    c.save();c.translate(-.15f*i,.09f*i);
+                    drawObject(c,o,mist,paper,accent,45+i*13,true);
+                    c.restore();
+                }
+                drawObject(c,o,ink,paper,accent,255,false);
+                break;
+            case LEVITATION:
+                c.save();c.translate(0,-.22f);
+                drawObject(c,o,ink,paper,accent,255,false);
+                c.restore();
+                stroke(accent,185,.003f);
+                p.setPathEffect(new android.graphics.DashPathEffect(new float[]{.025f,.021f},0));
+                c.drawLine(-.20f,.30f,-.20f,.67f,p);
+                c.drawLine(.22f,.30f,.22f,.67f,p);
+                p.setPathEffect(null);
+                fill(ink,45);
+                c.drawOval(new RectF(-.40f,.75f,.42f,.85f),p);
+                break;
+            case SEPARATION:
+                // Two clipped halves physically diverge, joined by repair marks.
+                c.save();c.clipRect(-1.25f,-1.25f,1.25f,0);
+                c.translate(-.075f,-.09f);
+                drawObject(c,o,ink,paper,accent,255,false);c.restore();
+                c.save();c.clipRect(-1.25f,0,1.25f,1.25f);
+                c.translate(.08f,.10f);
+                drawObject(c,o,ink,paper,accent,255,false);c.restore();
+                stroke(accent,235,.008f);
+                for(int i=0;i<6;i++){
+                    float x=-.28f+i*.11f;
+                    c.drawLine(x-.016f,-.037f,x+.016f,.042f,p);
+                }
+                break;
+            case OVERFLOW:
+                drawObject(c,o,ink,paper,accent,255,false);
+                // An opening produces an increasing swarm of original contents.
+                for(int i=0;i<22;i++){
+                    float t=i/22f;
+                    float x=-.15f+(float)rng.nextDouble()*.34f + .21f*t;
+                    float y=-.19f-.43f*t-(float)rng.nextDouble()*.11f;
+                    float rad=.009f+t*.022f;
+                    fill(i%3==0?accent:pale,190-i*4);
+                    if(i%2==0)c.drawCircle(x,y,rad,p);
+                    else c.drawRect(x-rad,y-rad,x+rad,y+rad,p);
+                }
+                break;
+            case SCALE:
+                drawObject(c,o,ink,paper,accent,255,false);
+                // A legible measurement system disagrees with the subject.
+                stroke(accent,225,.004f);
+                c.drawLine(.58f,-.50f,.58f,.49f,p);
+                for(int i=0;i<15;i++){
+                    float yy=-.50f+i*.071f;
+                    c.drawLine(.58f,yy,.58f+(i%3==0?.095f:.04f),yy,p);
+                }
+                fill(accent,230);
+                p.setTypeface(Typeface.create("monospace",Typeface.NORMAL));
+                p.setTextSize(.055f);
+                c.drawText("1:?",.65f,-.46f,p);
+                break;
+        }
+        c.restore();
+        // Register marks are deliberately absent: the work is not a UI diagram.
+        stroke(ink,50,.0017f);
+        c.drawLine(.08f,h*.85f,.92f,h*.85f,p);
+    }
+
+    private void drawObject(Canvas c,StoryPlan.ObjectKind kind,
+                            int ink,int paper,int accent,int opacity,boolean outline) {
+        c.save();
+        switch(kind){
+            case CHAIR:
+                if(outline){
+                    stroke(ink,opacity,.065f);
+                    c.drawLine(-.30f,-.36f,-.30f,.21f,p);
+                    c.drawLine(.19f,-.36f,.19f,.21f,p);
+                    c.drawLine(-.34f,.15f,.27f,.15f,p);
+                    c.drawLine(-.23f,.19f,-.30f,.52f,p);
+                    c.drawLine(.20f,.19f,.28f,.52f,p);
+                }else{
+                    fill(ink,opacity);
+                    c.drawRoundRect(new RectF(-.33f,-.48f,.25f,-.27f),.045f,.045f,p);
+                    c.drawRoundRect(new RectF(-.37f,-.27f,-.28f,.17f),.017f,.017f,p);
+                    c.drawRoundRect(new RectF(.20f,-.27f,.28f,.17f),.017f,.017f,p);
+                    quad(c,-.40f,.12f,.27f,.12f,.35f,.24f,-.33f,.24f);
+                    quad(c,-.32f,.21f,-.23f,.21f,-.27f,.60f,-.37f,.60f);
+                    quad(c,.22f,.21f,.31f,.21f,.37f,.60f,.29f,.60f);
+                    fill(accent,opacity*.88f);
+                    c.drawRect(-.26f,-.45f,-.19f,-.31f,p);
+                }
+                break;
+            case CUP:
+                fill(ink,opacity);
+                c.drawOval(new RectF(.10f,-.27f,.48f,.21f),p);
+                fill(paper,opacity);
+                c.drawOval(new RectF(.19f,-.18f,.39f,.12f),p);
+                fill(ink,opacity);
+                path.reset();path.moveTo(-.33f,-.29f);
+                path.lineTo(.24f,-.29f);path.lineTo(.16f,.44f);
+                path.quadTo(-.06f,.53f,-.24f,.44f);
+                path.close();c.drawPath(path,p);
+                fill(accent,opacity*.7f);
+                c.drawOval(new RectF(-.34f,-.38f,.25f,-.20f),p);
+                stroke(paper,opacity*.8f,.019f);
+                c.drawLine(-.23f,-.16f,-.19f,.34f,p);
+                break;
+            case LADDER:
+                stroke(ink,opacity,.070f);
+                p.setStrokeCap(Paint.Cap.ROUND);
+                c.drawLine(-.26f,-.55f,-.38f,.59f,p);
+                c.drawLine(.20f,-.55f,.31f,.59f,p);
+                stroke(accent,opacity,.040f);
+                for(int i=0;i<7;i++){
+                    float yy=-.44f+i*.15f;
+                    c.drawLine(-.27f+(yy+.55f)*-.09f,yy,
+                        .20f+(yy+.55f)*.08f,yy,p);
+                }
+                break;
+            case SUITCASE:
+                fill(ink,opacity);
+                c.drawRoundRect(new RectF(-.44f,-.31f,.42f,.52f),.11f,.11f,p);
+                stroke(ink,opacity,.055f);
+                c.drawRoundRect(new RectF(-.12f,-.48f,.12f,-.26f),.04f,.04f,p);
+                fill(accent,opacity*.83f);
+                c.drawRoundRect(new RectF(-.34f,-.22f,-.25f,.45f),.028f,.028f,p);
+                c.drawRoundRect(new RectF(.23f,-.22f,.32f,.45f),.028f,.028f,p);
+                fill(paper,opacity);
+                c.drawRect(-.045f,.02f,.045f,.13f,p);
+                stroke(paper,opacity*.65f,.011f);
+                c.drawRoundRect(new RectF(-.37f,-.25f,.35f,.47f),.05f,.05f,p);
+                break;
+            case LAMP:
+                fill(ink,opacity);
+                c.drawOval(new RectF(-.34f,.45f,.32f,.59f),p);
+                stroke(ink,opacity,.061f);
+                c.drawLine(-.02f,.48f,.11f,-.13f,p);
+                c.drawLine(.11f,-.13f,-.01f,-.31f,p);
+                fill(ink,opacity);
+                quad(c,-.31f,-.40f,.28f,-.40f,.40f,-.12f,-.43f,-.12f);
+                fill(accent,opacity);
+                c.drawOval(new RectF(-.39f,-.15f,.36f,-.09f),p);
+                stroke(paper,opacity*.65f,.012f);
+                c.drawLine(-.23f,-.34f,.18f,-.34f,p);
+                break;
+            case BOOK:
+                fill(ink,opacity);
+                quad(c,-.42f,-.32f,.28f,-.39f,.46f,.30f,-.24f,.42f);
+                fill(paper,opacity);
+                quad(c,-.36f,-.23f,.23f,-.30f,.38f,.27f,-.21f,.35f);
+                fill(accent,opacity*.88f);
+                quad(c,-.42f,-.32f,-.36f,-.23f,-.21f,.35f,-.24f,.42f);
+                stroke(ink,opacity*.72f,.012f);
+                for(int i=0;i<5;i++){
+                    float yy=-.13f+i*.08f;
+                    c.drawLine(-.18f,yy,.17f,yy-.04f,p);
+                }
+                break;
+            case UMBRELLA:
+                stroke(ink,opacity,.032f);
+                c.drawLine(0,-.16f,.05f,.45f,p);
+                path.reset();path.moveTo(.05f,.45f);
+                path.cubicTo(.07f,.70f,.30f,.63f,.28f,.47f);
+                c.drawPath(path,p);
+                fill(ink,opacity);
+                path.reset();path.moveTo(-.47f,-.14f);
+                path.quadTo(-.11f,-.81f,.13f,-.68f);
+                path.quadTo(.41f,-.63f,.49f,-.14f);
+                path.quadTo(.29f,-.25f,.13f,-.14f);
+                path.quadTo(-.04f,-.26f,-.19f,-.14f);
+                path.quadTo(-.32f,-.26f,-.47f,-.14f);path.close();
+                c.drawPath(path,p);
+                stroke(accent,opacity*.9f,.014f);
+                c.drawLine(.02f,-.70f,.03f,-.16f,p);
+                break;
+            case TEAPOT:
+                fill(ink,opacity);
+                c.drawOval(new RectF(-.37f,-.26f,.32f,.48f),p);
+                fill(ink,opacity);
+                c.drawOval(new RectF(-.50f,-.13f,-.18f,.27f),p);
+                fill(paper,opacity);
+                c.drawOval(new RectF(-.42f,-.04f,-.24f,.19f),p);
+                fill(ink,opacity);
+                path.reset();path.moveTo(.26f,-.14f);
+                path.quadTo(.52f,-.28f,.50f,-.43f);
+                path.lineTo(.61f,-.43f);
+                path.quadTo(.64f,-.14f,.35f,.13f);path.close();
+                c.drawPath(path,p);
+                fill(accent,opacity);
+                c.drawOval(new RectF(-.19f,-.37f,.18f,-.23f),p);
+                c.drawCircle(0,-.42f,.047f,p);
+                stroke(paper,opacity*.53f,.021f);
+                c.drawArc(new RectF(-.24f,-.13f,.14f,.30f),120,95,false,p);
+                break;
+        }
+        c.restore();
+    }
+
+    private void caption(Canvas c,float h,Artwork art,StoryPlan.Idea idea,
+                         int ink,int accent){
+        fill(ink,234);
         p.setTypeface(Typeface.create("serif",Typeface.BOLD));
-        p.setTextSize(.052f);
-        c.drawText(StoryPlan.motif(a.seed),.075f,h*.102f,p);
-        paint(rust,230,Paint.Style.FILL,.001f);
-        p.setTypeface(Typeface.create("sans-serif",Typeface.NORMAL));
-        p.setTextSize(.017f);
-        c.drawText("INTELLIGENT KUNST   /   STUDIES IN SMALL MYTHS",.075f,h*.124f,p);
-        paint(ink,135,Paint.Style.STROKE,.001f);
-        c.drawLine(.075f,h*.14f,.925f,h*.14f,p);
-        c.drawLine(.075f,h*.88f,.925f,h*.88f,p);
-        paint(ink,195,Paint.Style.FILL,.001f);
+        String heading=idea.proposition.title;
+        p.setTextSize(.046f);
+        while(p.measureText(heading)>.88f&&p.getTextSize()>.025f)p.setTextSize(p.getTextSize()*.92f);
+        c.drawText(heading,.065f,h*.091f,p);
+        fill(accent,230);
         p.setTypeface(Typeface.create("sans-serif",Typeface.NORMAL));
         p.setTextSize(.019f);
-        c.drawText("SERIE III     /     "+String.format(java.util.Locale.ROOT,"%02d",StoryPlan.scene(a.seed)+1),
-            .075f,h*.915f,p);
-        paint(rust,175,Paint.Style.FILL,.001f);
-        p.setTextSize(.018f);
-        c.drawText(a.id().substring(0,8)+"    •    UNIKT AVTRYKK",.51f,h*.915f,p);
+        c.drawText(idea.object.title+"   /   "+idea.space.name().replace('_',' '),.065f,h*.116f,p);
+        stroke(ink,125,.0015f);
+        c.drawLine(.065f,h*.136f,.935f,h*.136f,p);
+        c.drawLine(.065f,h*.892f,.935f,h*.892f,p);
+        fill(ink,170);
+        p.setTextSize(.019f);p.setTypeface(Typeface.create("monospace",Typeface.NORMAL));
+        c.drawText("STUDIE  "+art.id().substring(0,8),.065f,h*.920f,p);
+        p.setTextSize(.016f);
+        c.drawText(String.format(Locale.ROOT,"%02d / %02d",
+            idea.object.ordinal()+1,idea.proposition.ordinal()+1),.82f,h*.920f,p);
     }
 
-    private void sun(Canvas c,float x,float y,float rad,int light,int outline) {
-        wash(c,x,y,rad*2.7f,light,.24f);
-        paint(light,250,Paint.Style.FILL,.001f);
-        c.drawCircle(x,y,rad,p);
-        paint(outline,115,Paint.Style.STROKE,.0023f);
-        c.drawCircle(x,y,rad,p);
-        // A precise broken arc adds an imperfect, hand-pulled print edge.
-        paint(outline,110,Paint.Style.STROKE,.0013f);
-        c.drawArc(new RectF(x-rad-.014f,y-rad-.014f,x+rad+.014f,y+rad+.014f),
-            -35,180,false,p);
-    }
-    private void birds(Canvas c,float x,float y,int ink,SplittableRandom rng,int count){
-        for(int i=0;i<count;i++){
-            float xx=x+(float)(rng.nextDouble()-.5)*.23f;
-            float yy=y+(float)(rng.nextDouble()-.5)*.11f;
-            float s=.012f+(float)rng.nextDouble()*.015f;
-            paint(ink,165,Paint.Style.STROKE,.0025f);
-            p.setStrokeCap(Paint.Cap.ROUND);
-            path.reset();path.moveTo(xx-s,yy-s*.25f);
-            path.quadTo(xx-s*.33f,yy-s*.85f,xx,yy);
-            path.quadTo(xx+s*.4f,yy-s*.8f,xx+s,yy-s*.2f);
-            c.drawPath(path,p);
+    private void texture(Canvas c,float h,int paper,int ink,SplittableRandom rng){
+        // Independent noisy paper texture, visually subordinate to the subject.
+        fill(paper,22);
+        for(int i=0;i<460;i++){
+            float x=(float)rng.nextDouble(),y=(float)rng.nextDouble()*h;
+            c.drawCircle(x,y,.0006f,p);
         }
-    }
-    private void person(Canvas c,float x,float feet,float scale,int ink){
-        paint(ink,255,Paint.Style.FILL,.001f);
-        c.drawCircle(x,feet-scale*.9f,scale*.14f,p);
-        paint(ink,255,Paint.Style.STROKE,scale*.18f);
-        p.setStrokeCap(Paint.Cap.ROUND);
-        c.drawLine(x,feet-scale*.72f,x,feet-scale*.31f,p);
-        c.drawLine(x,feet-scale*.33f,x-scale*.20f,feet,p);
-        c.drawLine(x,feet-scale*.33f,x+scale*.20f,feet,p);
-        c.drawLine(x,feet-scale*.64f,x+scale*.24f,feet-scale*.51f,p);
-    }
-    private void etchedPaper(Canvas c,float h,int ink,int paper,SplittableRandom r){
-        paint(ink,15,Paint.Style.FILL,.001f);
-        for(int i=0;i<1800;i++){
-            float x=(float)r.nextDouble(), y=(float)r.nextDouble()*h;
-            float rad=.00035f+(float)r.nextDouble()*.00075f;
-            c.drawCircle(x,y,rad,p);
-        }
-        paint(paper,18,Paint.Style.STROKE,.001f);
-        for(int i=0;i<150;i++){
-            float x=(float)r.nextDouble(),y=(float)r.nextDouble()*h;
-            c.drawLine(x,y,x+(float)r.nextDouble()*.013f,y,p);
+        stroke(ink,16,.0006f);
+        for(int i=0;i<110;i++){
+            float x=(float)rng.nextDouble(),y=(float)rng.nextDouble()*h;
+            c.drawLine(x,y,x+.005f,y,p);
         }
     }
 
-    private void wash(Canvas c,float x,float y,float rad,int color,float opacity){
+    private void glow(Canvas c,float x,float y,float radius,int col,float alpha){
+        p.setShader(new RadialGradient(x,y,radius,
+            new int[]{Color.argb((int)(255*alpha),Color.red(col),Color.green(col),Color.blue(col)),
+                Color.TRANSPARENT},null,Shader.TileMode.CLAMP));
+        c.drawCircle(x,y,radius,p);p.setShader(null);
+    }
+    private void quad(Canvas c,float x1,float y1,float x2,float y2,
+                      float x3,float y3,float x4,float y4){
+        path.reset();path.moveTo(x1,y1);path.lineTo(x2,y2);
+        path.lineTo(x3,y3);path.lineTo(x4,y4);path.close();c.drawPath(path,p);
+    }
+    private void fill(int color,float alpha){
+        p.setShader(null);p.setPathEffect(null);
         p.setStyle(Paint.Style.FILL);
-        p.setShader(new RadialGradient(x,y,rad,
-            new int[]{alpha(color,(int)(opacity*255)),alpha(color,0)},
-            null,Shader.TileMode.CLAMP));
-        c.drawCircle(x,y,rad,p);p.setShader(null);
+        p.setColor(Color.argb(Math.max(0,Math.min(255,(int)alpha)),
+            Color.red(color),Color.green(color),Color.blue(color)));
     }
-    private void polygon(Canvas c,float[] points){
-        path.reset();path.moveTo(points[0],points[1]);
-        for(int i=2;i<points.length;i+=2)path.lineTo(points[i],points[i+1]);
-        path.close();c.drawPath(path,p);
+    private void stroke(int color,float alpha,float width){
+        fill(color,alpha);p.setStyle(Paint.Style.STROKE);
+        p.setStrokeWidth(width);p.setStrokeCap(Paint.Cap.ROUND);
+        p.setStrokeJoin(Paint.Join.ROUND);
     }
-    private void paint(int color,int opacity,Paint.Style style,float stroke){
-        p.setShader(null);p.setStyle(style);p.setStrokeWidth(stroke);
-        p.setStrokeCap(Paint.Cap.BUTT);p.setStrokeJoin(Paint.Join.ROUND);
-        p.setColor(alpha(color,opacity));
-    }
-    private void reset(){p.reset();p.setAntiAlias(true);p.setFilterBitmap(true);}
-    private static int alpha(int c,int opacity){
-        return Color.argb(Math.max(0,Math.min(255,opacity)),
-            Color.red(c),Color.green(c),Color.blue(c));
-    }
-    private static int mix(int a,int b,float x){
-        return Color.rgb((int)(Color.red(a)*(1-x)+Color.red(b)*x),
-            (int)(Color.green(a)*(1-x)+Color.green(b)*x),
-            (int)(Color.blue(a)*(1-x)+Color.blue(b)*x));
+    private static int tint(int a,int b,float t){
+        return Color.rgb((int)(Color.red(a)*(1-t)+Color.red(b)*t),
+            (int)(Color.green(a)*(1-t)+Color.green(b)*t),
+            (int)(Color.blue(a)*(1-t)+Color.blue(b)*t));
     }
 }
