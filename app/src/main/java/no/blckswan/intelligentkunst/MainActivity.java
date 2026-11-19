@@ -352,11 +352,14 @@ public final class MainActivity extends Activity {
     private void about(){
         new AlertDialog.Builder(this).setTitle("Et kunstig blikk")
             .setMessage("Kan et program utvikle et eget kunstnerisk uttrykk?\n\n"
-                + "ATELIER 003 skisserer 12 faktiske motiver, hver med 42 interne DNA-forslag. "
+                + "ATELIER 003 skisserer 12 bilder, hvert fra 42 interne DNA-forslag. "
                 + "Bildene males i miniatyr, undersøkes og sammenliknes. Kontrast, fokus, "
                 + "negative rom, markeringer og visuell ulikhet påvirker hvilket bilde som velges.\n\n"
-                + "Motivene har en intensjon: fyrtårn, dør, tre eller hval. "
-                + "Et verk utvikler seg gjennom EVOLVER og kan arve motivet fra tidligere kunst.\n\n"
+                + "Verket begynner med en fysisk idé: et vanlig objekt bryter én forståelig "
+                + "regel om tyngde, skygge, helhet, størrelse eller hukommelse. "
+                + "Den valgte regelen endrer selve illustrasjonen.\n\n"
+                + "Det er en kombinatorisk kunstgrammatikk, ikke fri idétenkning. "
+                + "Den bruker ingen av dine tidligere prosjekter eller motiver.\n\n"
                 + "Dette er håndprogrammert generativ kunst med bildepikselanalyse, "
                 + "ikke en trent generativ bildemodell. Ingen nettverkstillatelser.")
             .setPositiveButton("Tilbake til atelieret",null).show();
