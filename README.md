@@ -35,6 +35,23 @@ Ingen av motivene velges på grunnlag av brukerhistorikk eller personlige refera
 
 **Ærlig avgrensning:** dette er fremdeles en begrenset *regelbasert* oppfinner med bildepikselanalyse. Det er ikke en trent, åpent assosierende bildemodell, og pixel-statistikk alene kan ikke måle kunstnerisk kvalitet. Hvis målet er et virkelig overraskende kunstnersubjekt, må videre versjoner øke handlingsrom, kritikk og læring utover disse faste byggesteinene.
 
+## Atelier 007 · Faktisk lokal nevralkunst, uten API-nøkkel
+
+**✦ AKT/FOTO → LOKAL AI** er nå en reell overgang til den åpne,
+separate Android-appen [Local Diffusion](https://github.com/rmatif/Local-Diffusion).
+Denne kjører [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp)
+lokalt med **nedlastede modellvekter**, uten betalt skykall eller API-nøkkel.
+Kunstprompten kopieres til utklippstavlen; du genererer bildet i
+Local Diffusion, lagrer det og åpner resultatet i Intelligent Kunst med
+**ÅPNE FOTO**.
+
+Dette er **integrasjon mellom to apper**, ikke intern diffusjonsmotor:
+vår APK inneholder ingen modellvekter, og ingen bakgrunnsmodell kjører i
+Intelligent Kunst. Egen modellinstallasjon kan kreve gigabyte RAM og lagring.
+Den andre appen ber om omfattende lagringstilgang. Les
+[modellveiledningen og den tekniske avgrensningen](docs/LOCAL_NEURAL.md)
+før du installerer. Intelligent Kunst beholder null nettverkstillatelser.
+
 ## Atelier 006.1 · Etter visuell Android-kontroll
 
 I Android-emulatoren var den første modellen tydelig for stilisert, med feil hårmateriale, kraftige høylys og et toppfelt som kolliderte med systemets statuslinje. Versjon **0.6.1** retter dette og bruker **akademisk kulltegning** som utgangspunkt, med olje/sepia som valg. Figurene er fremdeles original, prosedyrebasert illustrasjon; realistiske bilder kommer fra brukerens faktiske fotografier, ikke fra et påstått trent nevralt nettverk.
