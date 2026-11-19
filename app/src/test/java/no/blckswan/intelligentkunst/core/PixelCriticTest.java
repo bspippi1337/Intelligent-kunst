@@ -73,6 +73,40 @@ public final class PixelCriticTest {
         assertEquals(after,restored.reward(ignored),0);
     }
 
+    @Test public void offspringPreserveTheirParentsVisualSubject() {
+        ArtDirector author=new ArtDirector();
+        ArtDirector.Taste taste=new ArtDirector.Taste();
+        for(long i=0;i<180;i++){
+            Artwork parent=author.create(i*31+5,
+                java.util.Collections.emptyList(),taste);
+            Artwork child=author.evolve(parent,i*37+213,
+                java.util.Collections.singletonList(parent),taste);
+            StoryPlan.Idea before=StoryPlan.generate(parent.seed);
+            StoryPlan.Idea after=StoryPlan.generate(child.seed);
+            assertEquals("A child should not abruptly switch subject",
+                before.object,after.object);
+            assertNotEquals(parent.seed,child.seed);
+            assertEquals(parent.seed,child.parentSeed);
+            assertTrue(child.hasParent);
+        }
+    }
+
+    @Test public void conceptualVariantsCanAlterPremiseWithoutLosingSubject() {
+        StoryPlan.Idea ancestor=StoryPlan.generate(12345);
+        boolean foundDifferent=false;
+        for(int i=0;i<100;i++){
+            long seed=ConceptLineage.childSeed(i*137L+3,ancestor,false);
+            StoryPlan.Idea child=StoryPlan.generate(seed);
+            assertEquals(ancestor.object,child.object);
+            if(child.proposition!=ancestor.proposition)foundDifferent=true;
+        }
+        assertTrue(foundDifferent);
+        long close=ConceptLineage.childSeed(42,ancestor,true);
+        StoryPlan.Idea sibling=StoryPlan.generate(close);
+        assertEquals(ancestor.object,sibling.object);
+        assertEquals(ancestor.proposition,sibling.proposition);
+    }
+
     @Test public void independentWorksCannotRepeatRecentSubjectsOrIdeas() {
         ArtDirector author=new ArtDirector();
         ArtDirector.Taste blank=new ArtDirector.Taste();
