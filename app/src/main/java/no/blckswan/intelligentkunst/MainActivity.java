@@ -424,21 +424,31 @@ public final class MainActivity extends Activity {
             + (next.hasParent ? "   ·   FRA " + String.format(Locale.ROOT,"%016X",next.parentSeed).substring(0,6) : ""));
         edition.setText("ATELIER 005     /     VERK " + archive.recent().size()
             + (next.style==Artwork.Style.AIGUIDE ? " · AIGUIDE" : " · LOKALT"));
-        likeButton.setText(archive.isSaved(next) ? "♥  LÆRT" :
-            archive.isRejected(next) ? "✕  AVVIST" : "♡  LÆR");
+        likeButton.setText(archive.isSaved(next)
+            ? (next.style==Artwork.Style.AIGUIDE?"♥  LAGRET":"♥  LÆRT") :
+            archive.isRejected(next) ? "✕  AVVIST" :
+            next.style==Artwork.Style.AIGUIDE?"♡  LAGRE":"♡  LÆR");
     }
     private void like(){
         if(artwork==null)return;
+        boolean remote=artwork.style==Artwork.Style.AIGUIDE;
         boolean learned=archive.teach(artwork);
-        likeButton.setText("♥  LÆRT");
-        shortToast(learned ? "Smaken din er lagret lokalt. Verket er i samlingen."
-                           : "Dette verket har allerede lært kunstneren noe.");
+        likeButton.setText(remote?"♥  LAGRET":"♥  LÆRT");
+        shortToast(learned
+            ? remote ? "Lagret i samlingen. Dette trener ikke den eksterne modellen."
+                     : "Smaken din er lagret lokalt. Verket er i samlingen."
+            : "Dette verket har allerede fått en tilbakemelding.");
     }
 
     private void reject(){
         if(artwork==null||composing)return;
         if(!archive.reject(artwork)){
             shortToast("Dette verket har allerede fått en tilbakemelding.");return;
+        }
+        if(artwork.style==Artwork.Style.AIGUIDE){
+            likeButton.setText("✕  AVVIST");
+            shortToast("Avvist lokalt. Ekstern AI blir ikke trent. Bruk ✦ AI for et nytt forsøk.");
+            return;
         }
         shortToast("Registrert: denne ideen skal veie mindre. Skaper et nytt verk.");
         newArtwork();
