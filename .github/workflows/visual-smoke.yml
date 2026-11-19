@@ -44,10 +44,17 @@ jobs:
             gradle --no-daemon :app:assembleDebug
             adb install -r app/build/outputs/apk/debug/app-debug.apk
             adb shell am start -n no.blckswan.intelligentkunst/.MainActivity
-            sleep 25
+            sleep 20
             mkdir -p visual
-            adb exec-out screencap -p > visual/atelier-003-home.png
-            test -s visual/atelier-003-home.png
+            adb exec-out screencap -p > visual/study-00.png
+            for n in 01 02 03 04 05; do
+              # Pixel 6 emulator in this workflow has 1080x2400 viewport.
+              adb shell input tap 250 2010
+              sleep 9
+              adb exec-out screencap -p > "visual/study-${n}.png"
+              test -s "visual/study-${n}.png"
+            done
+            sha256sum visual/*.png
       - name: Upload screenshot evidence
         if: always()
         uses: actions/upload-artifact@v4
