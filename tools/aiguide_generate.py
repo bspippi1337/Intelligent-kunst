@@ -41,10 +41,22 @@ def validate(data):
             "curve": ("x", "y", "cx1", "cy1", "cx2", "cy2", "x2", "y2"),
             "poly": ()
         }[kind]
+        alpha = el.get("alpha", 1)
+        if not isinstance(alpha, (int, float)) or not 0.04 <= alpha <= 1:
+            raise ValueError("Invalid alpha")
         for prop in props:
             n = el[prop]
-            if not isinstance(n, (int, float)) or not -0.25 <= n <= 1.5:
+            if not isinstance(n, (int, float)):
+                raise ValueError(f"Invalid number: {prop}")
+            if prop in {"w", "h"}:
+                if not 0 < n <= 1.5:
+                    raise ValueError(f"Invalid extent: {prop}")
+            elif not -0.25 <= n <= 1.25:
                 raise ValueError(f"Invalid coordinate: {prop}")
+        if kind in {"line", "curve"}:
+            width = el.get("width", .009)
+            if not isinstance(width, (int, float)) or not .001 <= width <= .09:
+                raise ValueError("Invalid stroke width")
         if kind == "poly":
             p = el["points"]
             if not isinstance(p, list) or not 3 <= len(p) <= 18:
