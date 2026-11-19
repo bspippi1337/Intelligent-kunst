@@ -30,7 +30,7 @@ import java.util.TimeZone;
  */
 public final class AiguideClient {
     private static final String ENDPOINT="https://api.openai.com/v1/chat/completions";
-    private static final String SOURCE_COMMIT="c55f658610a0bb27f90c75619510dc8ad5c36a2f";
+    private static final String SOURCE_COMMIT="92609d71e6c8cb7b57be640d042b6148f9baf485";
     private final Context context;
 
     public AiguideClient(Context context){this.context=context.getApplicationContext();}
