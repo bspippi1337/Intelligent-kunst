@@ -8,15 +8,15 @@
 
 [![Android CI](https://github.com/bspippi1337/Intelligent-kunst/actions/workflows/android.yml/badge.svg)](https://github.com/bspippi1337/Intelligent-kunst/actions/workflows/android.yml)
 ![Android 10+](https://img.shields.io/badge/Android-10%2B-DAFB81?labelColor=111111)
-![Offline core](https://img.shields.io/badge/offline-core-DAFB81?labelColor=111111)
-![Optional AI](https://img.shields.io/badge/AI-opt--in-A3B7FE?labelColor=111111)
+![Fully Offline](https://img.shields.io/badge/network-no%20permission-DAFB81?labelColor=111111)
+![Classical Art](https://img.shields.io/badge/classical-art%20%2B%20photo-A3B7FE?labelColor=111111)
 ![Language](https://img.shields.io/badge/language-Java%2017-A3B7FE?labelColor=111111)
 
 </div>
 
 ## Kunstneren bor i telefonen
 
-**Intelligent Kunst** er en native Android-app med to adskilte verksteder: en lokal, regelbasert kunstmotor som fungerer helt uten nett, og en **frivillig AI-modus** bygget på [aiguide-dev](https://github.com/bspippi1337/aiguide-dev). AI-modusen sender kun brukervalgt prompt til en ekstern modell med en API-nøkkel du selv oppgir. Ingen innlogging, reklame eller analyse-SDK-er.
+**Intelligent Kunst** er nå en fullstendig **nøkkelfri og nettverksfri** Android-app. Den har to verksteder: lokal konseptuell generativ kunst og **KLASSISK ATELIER**, der du lager originale akademiske aktstudier eller bruker egne fotografier som referanser for trofast gjengivelse, olje-, kull- og sepiastudier. Ingen pålogging, API-nøkkel, reklame, skylagring eller nettverkstillatelse.
 
 Hvert trykk på **SKAP NYTT** setter nå et lite digitalt atelier i arbeid:
 
@@ -35,6 +35,18 @@ Ingen av motivene velges på grunnlag av brukerhistorikk eller personlige refera
 
 **Ærlig avgrensning:** dette er fremdeles en begrenset *regelbasert* oppfinner med bildepikselanalyse. Det er ikke en trent, åpent assosierende bildemodell, og pixel-statistikk alene kan ikke måle kunstnerisk kvalitet. Hvis målet er et virkelig overraskende kunstnersubjekt, må videre versjoner øke handlingsrom, kritikk og læring utover disse faste byggesteinene.
 
+## Atelier 006 · Klassisk akt og fotografisk referanse, helt offline
+
+Trykk **✦ AKT/FOTO** i appen. Dette åpner et eget verksted uten konto og uten noen API-nøkkel.
+
+- **AKTSTUDIE** tegner en ny akademisk voksen aktmodell lokalt med klassiske kroppsproporsjoner, sittende eller stående positur, atelierlys og dempet fargepalett. **NY POSITUR** lager et nytt figurforslag. Dette er original programmatisk anatomistudie, ikke en kopi av et bestemt menneske og ikke fotorealistisk nevralt generert nakenfoto.
+- **ÅPNE FOTO** bruker Androids systemvelger. Bildet blir ikke lastet opp. **FOTO** beholder detaljene i det faktiske referansebildet, uten å finne på ansikter eller andre trekk.
+- **OLJE** legger lokalt genererte penselstrøk basert på fotografiets farger; **KULL** lager en monokrom studie, og **SEPIA** en klassisk arkivtoning.
+- **EKSPORTER PNG** lagrer i Bilder / Intelligent Kunst via Android MediaStore. Fotografieksport beholder originalens sideforhold og bruker en minnebegrenset bildedekoder. Figurstudiens eksport er 2160 × 3840.
+- Appen trenger **ingen INTERNET-tillatelse**. Sist valgte foto kan åpnes på nytt via Androids vedvarende dokumenttilgang. Bildene ligger hos deg, ikke hos oss.
+
+**Viktig kvalitetsgrense:** Fotorealistisk *gjengivelse* av et eksisterende fotografi er implementert. Fotorealistisk *nyskapning fra bare tekst* krever en lokal nevralt trent bildegenereringsmodell med betydelige modellfiler og maskinvarekrav. Dette følger **ikke** med i 0.6.0, og vi later ikke som filtre eller vektorfigurer løser det. Appens figurtegner er et klassisk malerieksperiment, ikke maskinlært 3D-anatomi.
+
 ## Atelier 005.1 · Idéer får en utviklingshistorie
 
 **EVOLVER** beholder nå objektet i forelderverket. Ny generasjon søker en ny tegning av den samme visuelle idéen, og kan av og til undersøke en annen fysisk motsetning med samme objekt. Slektskap er dermed noe man kan se i bildene, ikke bare et foreldrenummer i DNA. En serie tester bekrefter dette for 180 generasjoner.
@@ -45,23 +57,17 @@ Vi har også kontrollert seks forskjellige komposisjoner i en ekte Android-emula
 
 AI-bildemanus kan nå bruke **sammenhengende, fylte Bézier-former** med kubiske og kvadratiske kurver, egne konturer, og **lineære eller radiale fargeforløp**. Hver tegningsinstruksjon valideres før den tegnes. Ingen programkode, eksterne bildekilder eller ubegrensede tegningssekvenser.
 
-En komplett, nøkkelfri prøve ligger i [examples/expressive-vector-scene.json](examples/expressive-vector-scene.json). Importer via **DNA / ? → Importer AI-bildemanus** uten API-konto. Android og Python har tester for kurver, malingsdata og ugyldige kommandoer.
+En komplett, nøkkelfri prøve ligger i [examples/expressive-vector-scene.json](examples/expressive-vector-scene.json). Importer via **DNA / ? → Importer grafikkmanus (JSON)** uten API-konto. Android og Python har tester for kurver, malingsdata og ugyldige kommandoer.
 
 Dette er bedre *uttrykksrom*, ikke dokumentasjon på at modellen automatisk produserer god kunst.
 
 ## Atelier 004 · aiguide: AI lager bildemanus, Android maler
 
-**✦ AI** åpner et eget atelier som bruker den originale `aiguide-dev`-promptmalen og den samme `ask(query)`- og JSONL-loggflyten i en native Android-port. En ekstern språkmodell lager en **ny, konkret bildekomposisjon med opptil 90 tegnbare elementer**, og Android-maleren gjengir den som et vektorbasert verk. AI-kunstverk lagres som DNA v3 med hele bildemanuset, slik at bildene kan åpnes og eksporteres senere **uten nett**.
+Historiske AI-grafikkmanus kan fortsatt åpnes, lagres og eksporteres offline via DNA v3 eller **DNA / ? → Importer grafikkmanus (JSON)**. Det native nettverkskallet og skjermbildet for API-nøkkel er fjernet fra APK-en. Verken AI eller en ekstern modell kreves for å tegne. Importerte kunstverk blir ikke brukt til å trene en ekstern modell.
 
-Du kan også bruke det **faktiske Python-biblioteket** med `tools/aiguide_generate.py` i Termux/Linux og importere JSON i appen via `DNA / ? → Importer AI-bildemanus`. Originalbiblioteket og den native Android-porten er forskjellige implementasjoner av samme arbeidsflyt.
+Den originale [aiguide-dev](https://github.com/bspippi1337/aiguide-dev)-bibliotekskoden lever fortsatt som et uavhengig **utviklerverktøy** i Termux/Linux. Skriptet `tools/aiguide_generate.py` kan skrive slike bildemanus for import, men dette er ikke en del av Android-appens vanlige arbeidsflyt. Et slikt separat API-skript krever egne modelltilganger og er ikke nødvendig for funksjonene over.
 
-- AI-knappen krever internett og din egen OpenAI API-nøkkel. Nøkkelen lagres ikke, og modellen kan påføre API-kostnader.
-- På AI-verk betyr **♡ LAGRE** at verket arkiveres lokalt. Dette trener **ikke** den eksterne modellen. Positiv/negativ læring påvirker bare den lokale FORTELLING-motoren. Avviste AI-verk blir registrert lokalt uten å bli sendt til modellleverandøren.
-- Resultatets tegnekommandoer blir validert og begrenset til et lite sett med former, kurver, linjer og polygoner. Ingen skript eller eksterne ressurs-URL-er blir utført.
-- Logg med synlig forespørsel og svar lagres privat i appens filer, i JSONL-format. Ingen påstand om tilgang til skjult resonnering.
-- **Dette er KI-styrt illustrasjon, ikke en diffusjonsmodell.** Kunstnerisk kvalitet kan ikke garanteres av språkmodellen eller den eksisterende pikselpoengsummen.
-
-[Les integrasjonsguiden for aiguide](docs/AIGUIDE.md).
+[Les dokumentasjonen for det historiske aiguide-formatet](docs/AIGUIDE.md).
 
 ## Atelier 002 · Dagens verk, kritikk og avstamning
 
@@ -118,15 +124,18 @@ app/src/main/java/no/blckswan/intelligentkunst/
 ├── render/
 │   ├── RenderEngine.java   # DNA-kompatibilitet og routing
 │   ├── StoryPainter.java   # typografisk, narrativ trykk-kunst
-│   └── StudioDirector.java # tolv forhåndsvisninger og visuell utvelgelse
+│   ├── StudioDirector.java # tolv forhåndsvisninger og visuell utvelgelse
+│   ├── ClassicalFigurePainter.java # akt og atelierlys
+│   └── PhotoPainter.java   # lokal fotoreproduksjon og studiostiler
 ├── ui/
 │   └── ArtworkView.java    # asynkron rendering, caching, crossfade og berøring
 ├── storage/
 │   └── ArtArchive.java     # offline samling, smak og nylig arbeid
-└── MainActivity.java      # atelier, import, galleri, eksport og deling
+├── ClassicalStudioActivity.java # privat akt- og fotoatelier
+└── MainActivity.java      # lokal konseptkunst, arkiv, PNG og grafikkmanus
 ```
 
-**Personvern:** Appen har `INTERNET`-tillatelse for den valgfrie AI-knappen, men offline-motoren sender ingen forespørsler. AI-modusen sender prompt og en midlertidig API-nøkkel over HTTPS til leverandøren, og loggfører kun synlig prompt og svar privat på enheten. Nøkkelen lagres ikke. PNG havner i bildegalleriet bare når du eksporterer; delingsmenyen vises på forespørsel. Kildekoden kan inspiseres.
+**Personvern:** Appen har **ingen INTERNET-tillatelse** og inneholder ingen API-klient. Brukerfoto blir behandlet lokalt via Androids systemvelger. Appen lagrer kun URI-en til siste valgte foto i sin private lagring for gjenåpning, med Androids dokumenttillatelse når leverandøren støtter det. Selve fotoet kopieres ikke til en server. PNG blir lagt i bildegalleriet bare ved eksport. Kildekoden er åpen for inspeksjon.
 
 **Ytelse:** Avansert malearbeid skjer utenfor UI-tråden. Kunstverk blir rendret én gang som skjermcache, og ved eksport i full oppløsning. Verken komposisjon eller innstillinger trenger en server. DNA-valg er reproduserbare, mens opplevelsen rundt dem er interaktiv.
 
