@@ -15,6 +15,9 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.RadialGradient;
+import android.graphics.RectF;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.LinearGradient;
@@ -61,7 +64,7 @@ public final class ClassicalStudioActivity extends Activity {
     private Bitmap preview;
     private Uri imageUri;
     private long figureSeed=2712L;
-    private boolean figure=true,exporting=false;
+    private boolean figure=true,exporting=false,fixturePhoto=false;
     private PhotoPainter.Mode activeMode=PhotoPainter.Mode.CHARCOAL;
 
     @Override protected void onCreate(Bundle state){
@@ -195,6 +198,15 @@ public final class ClassicalStudioActivity extends Activity {
                 try{imageUri=Uri.parse(uriText);loadPhoto(imageUri,true);}
                 catch(Exception error){figure=true;}
             }
+        }else if(getIntent().hasExtra("ik_photo_fixture") &&
+                (getApplicationInfo().flags &
+                    android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE)!=0){
+            preview=syntheticStillLife();
+            figure=false;
+            fixturePhoto=true;
+            activeMode="charcoal".equals(getIntent().getStringExtra("ik_photo_fixture"))
+                ?PhotoPainter.Mode.CHARCOAL:PhotoPainter.Mode.OIL;
+            figureSeed=332211L;
         }else if(getIntent().getBooleanExtra("ik_classical_fixture",false)){
             figureSeed=249833L;figure=true;
         }else{
@@ -355,7 +367,8 @@ public final class ClassicalStudioActivity extends Activity {
                 "KULL / MONOKROM REFERANSE",
                 "SEPIA / ARKIVTONER"};
             message.setText(styles[activeMode.ordinal()]);
-            subjectLabel.setText("DITT FOTO / LOKAL REFERANSE");
+            subjectLabel.setText(fixturePhoto?"SYNTHETISKE TESTDATA · IKKE FOTO"
+                :"DITT FOTO / LOKAL REFERANSE");
         }
         requestPreviewPaint();
     }
@@ -424,6 +437,7 @@ public final class ClassicalStudioActivity extends Activity {
             // Some providers offer session access only.
         }
         imageUri=uri;
+        fixturePhoto=false;
         getPreferences(MODE_PRIVATE).edit().putString("photo_uri",uri.toString()).apply();
         loadPhoto(uri);
     }
@@ -531,6 +545,66 @@ public final class ClassicalStudioActivity extends Activity {
             }
         });
     }
+    /** Synthetic shapes exercise real photo-stroke math in CI; never artwork or photo. */
+    private static Bitmap syntheticStillLife(){
+        Bitmap b=Bitmap.createBitmap(540,780,Bitmap.Config.ARGB_8888);
+        Canvas c=new Canvas(b);
+        Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);
+        p.setShader(new LinearGradient(0,0,540,780,
+            new int[]{0xFF343C48,0xFF6D7475,0xFF2D2D32},
+            null,Shader.TileMode.CLAMP));
+        c.drawRect(0,0,540,780,p);p.setShader(null);
+        p.setColor(0xFFBFB7A4);
+        c.drawRect(0,595,540,780,p);
+        p.setShader(new LinearGradient(0,590,540,780,
+            new int[]{0xFFBEB4A3,0xFF746656},null,Shader.TileMode.CLAMP));
+        c.drawRect(0,595,540,780,p);p.setShader(null);
+        p.setColor(0x77221C18);
+        c.drawOval(new RectF(73,590,487,667),p);
+
+        // Vessel: narrow neck, wider glazed body and light reflected from left.
+        p.setShader(new LinearGradient(145,300,425,600,
+            new int[]{0xFFE7D8C0,0xFFB8A897,0xFF514F4D},
+            null,Shader.TileMode.CLAMP));
+        Path vessel=new Path();
+        vessel.moveTo(233,260);
+        vessel.cubicTo(233,290,213,318,196,340);
+        vessel.cubicTo(156,401,147,468,163,545);
+        vessel.cubicTo(175,615,367,636,389,548);
+        vessel.cubicTo(409,455,378,388,333,335);
+        vessel.cubicTo(310,302,310,279,310,260);
+        vessel.close();
+        c.drawPath(vessel,p);
+        p.setShader(null);
+        p.setColor(0x66FFF6E1);
+        c.drawOval(new RectF(174,345,221,565),p);
+        p.setColor(0xFF5C5751);
+        c.drawOval(new RectF(225,253,317,269),p);
+        p.setColor(0xFF2E3033);
+        c.drawOval(new RectF(233,258,309,266),p);
+        p.setColor(0x88FFF3D3);
+        c.drawOval(new RectF(229,259,240,267),p);
+
+        // Two rounded fruit forms provide recognizable curved edges/occlusion.
+        p.setShader(new RadialGradient(374,542,102,
+            new int[]{0xFFD5A86E,0xFF936241,0xFF3C342B},
+            null,Shader.TileMode.CLAMP));
+        c.drawOval(new RectF(314,495,477,648),p);
+        p.setShader(new RadialGradient(132,556,92,
+            new int[]{0xFFB4A454,0xFF68623A,0xFF33332D},
+            null,Shader.TileMode.CLAMP));
+        c.drawOval(new RectF(65,510,224,659),p);p.setShader(null);
+        p.setColor(0xFF302F25);
+        p.setStrokeWidth(5f);
+        c.drawLine(397,500,391,480,p);
+        c.drawLine(140,515,130,496,p);
+        p.setColor(0xA8EADBB8);
+        c.drawOval(new RectF(340,511,370,538),p);
+        p.setColor(0x77F9E6B9);
+        c.drawOval(new RectF(89,526,116,548),p);
+        return b;
+    }
+
     private static void drawFigure(Canvas c,int w,int h,long seed,PhotoPainter.Mode mode){
         if(mode!=PhotoPainter.Mode.SEPIA){
             new ClassicalFigurePainter().draw(c,w,h,seed,mode==PhotoPainter.Mode.CHARCOAL);
