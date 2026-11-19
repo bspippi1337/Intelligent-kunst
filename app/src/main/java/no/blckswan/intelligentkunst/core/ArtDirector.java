@@ -33,7 +33,9 @@ public final class ArtDirector {
         Artwork best = null;
         double bestScore = -Double.MAX_VALUE;
         for (int i = 0; i < CANDIDATES; i++) {
-            Artwork.Style style = Artwork.Style.values()[random.nextInt(Artwork.Style.values().length)];
+            // New works have subjects and visual stakes; legacy geometry remains
+            // accessible from existing DNA and archived artworks.
+            Artwork.Style style = Artwork.Style.FABLE;
             int palette = random.nextInt(Artwork.PALETTES.length);
             Artwork candidate = new Artwork(random.nextLong(), style, palette,
                 random.nextDouble(), random.nextDouble(), random.nextDouble(),
@@ -53,8 +55,7 @@ public final class ArtDirector {
         Artwork best = null;
         double bestScore = -Double.MAX_VALUE;
         for (int i = 0; i < CANDIDATES; i++) {
-            Artwork.Style style = random.nextDouble() < 0.82 ? parent.style :
-                Artwork.Style.values()[random.nextInt(Artwork.Style.values().length)];
+            Artwork.Style style = Artwork.Style.FABLE; // even legacy parents can become stories
             int palette = random.nextDouble() < 0.76 ? parent.palette : random.nextInt(Artwork.PALETTES.length);
             Artwork child = new Artwork(random.nextLong(), style, palette,
                 mutate(random, parent.energy), mutate(random, parent.complexity),
