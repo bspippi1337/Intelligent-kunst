@@ -77,6 +77,15 @@ public final class AiguideSceneTest {
         try{AiguideScene.validate(input.toString());fail("accepted zero-length gradient");}
         catch(JSONException expected){}
     }
+    @Test public void failsClosedOnUnknownSchemaVersion()throws Exception {
+        JSONObject scene=base();
+        scene.put("version",17);
+        try{AiguideScene.validate(scene.toString());fail("accepted unsupported format");}
+        catch(JSONException expected){}
+        scene.remove("version");
+        try{AiguideScene.validate(scene.toString());fail("accepted missing format version");}
+        catch(JSONException expected){}
+    }
     @Test public void rejectsHugeSubtrees()throws Exception {
         JSONObject input=base();JSONObject shape=path();
         JSONArray commands=new JSONArray();
