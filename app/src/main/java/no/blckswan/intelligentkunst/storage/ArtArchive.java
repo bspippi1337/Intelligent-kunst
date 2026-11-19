@@ -13,6 +13,7 @@ import no.blckswan.intelligentkunst.core.Artwork;
 /** Small, private archive. Preferences never leave the handset. */
 public final class ArtArchive {
     private static final int LIMIT=100;
+    private static final int LINEAGE_LIMIT=300;
     private final SharedPreferences store;
     public ArtArchive(Context context) {
         store=context.getSharedPreferences("artist_archive_v1",Context.MODE_PRIVATE);
@@ -32,14 +33,25 @@ public final class ArtArchive {
     }
     private void write(String key,List<Artwork> items) {
         JSONArray out=new JSONArray();
-        for(int i=0;i<items.size()&&i<LIMIT;i++)out.put(items.get(i).encode());
+        int cap="lineage".equals(key)?LINEAGE_LIMIT:LIMIT;
+        for(int i=0;i<items.size()&&i<cap;i++)out.put(items.get(i).encode());
         store.edit().putString(key,out.toString()).apply();
     }
     public void remember(Artwork artwork) {
         List<Artwork> items=recent();
         items.removeIf(a->a.id().equals(artwork.id()));
         items.add(0,artwork); write("recent",items);
+        List<Artwork> lineage=read("lineage");
+        lineage.removeIf(a->a.id().equals(artwork.id()));
+        lineage.add(0,artwork);
+        write("lineage",lineage);
         store.edit().putString("current",artwork.encode()).apply();
+    }
+    public Artwork findBySeed(long seed) {
+        for(Artwork art:read("lineage"))if(art.seed==seed)return art;
+        for(Artwork art:read("recent"))if(art.seed==seed)return art;
+        for(Artwork art:saved())if(art.seed==seed)return art;
+        return null;
     }
     public Artwork current() {
         try {return Artwork.decode(store.getString("current",""));}
