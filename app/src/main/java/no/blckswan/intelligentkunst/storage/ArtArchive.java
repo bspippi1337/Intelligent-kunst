@@ -73,7 +73,9 @@ public final class ArtArchive {
     public ArtDirector.Taste taste() {
         ArtDirector.Taste t=new ArtDirector.Taste();
         t.load(readVotes("style_votes",Artwork.Style.values().length),
-            readVotes("palette_votes",Artwork.PALETTES.length));
+            readVotes("palette_votes",Artwork.PALETTES.length),
+            readVotes("object_votes",no.blckswan.intelligentkunst.core.StoryPlan.ObjectKind.values().length),
+            readVotes("proposition_votes",no.blckswan.intelligentkunst.core.StoryPlan.Proposition.values().length));
         return t;
     }
     private int[] readVotes(String key,int size){
@@ -93,7 +95,9 @@ public final class ArtArchive {
         if(!save(artwork))return false;
         ArtDirector.Taste taste=taste();taste.like(artwork);
         store.edit().putString("style_votes",join(taste.styleVotes()))
-            .putString("palette_votes",join(taste.paletteVotes())).apply();
+            .putString("palette_votes",join(taste.paletteVotes()))
+            .putString("object_votes",join(taste.objectVotes()))
+            .putString("proposition_votes",join(taste.propositionVotes())).apply();
         return true;
     }
 }
