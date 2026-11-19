@@ -26,7 +26,6 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.text.InputType;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,7 +39,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import no.blckswan.intelligentkunst.ai.AiguideClient;
 import no.blckswan.intelligentkunst.ai.AiguideScene;
 import no.blckswan.intelligentkunst.core.ArtDirector;
 import no.blckswan.intelligentkunst.core.Artwork;
@@ -52,7 +50,7 @@ import no.blckswan.intelligentkunst.render.StudioDirector;
 import no.blckswan.intelligentkunst.storage.ArtArchive;
 import no.blckswan.intelligentkunst.ui.ArtworkView;
 
-/** KUNST / native procedural studio + explicit opt-in AIGUIDE cloud composition. */
+/** KUNST / native offline creator, image-manus import and local classical studio. */
 public final class MainActivity extends Activity {
     private static final int INK=0xFFF6F4ED;
     private static final int QUIET=0xFFB1B4B5;
@@ -88,6 +86,13 @@ public final class MainActivity extends Activity {
         if((getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE)!=0
             && getIntent().getBooleanExtra("ik_visual_fixture",false)){
             loadDemoScene();return;
+        }
+        if((getApplicationInfo().flags &
+            android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE)!=0
+            && getIntent().getBooleanExtra("ik_classical_fixture",false)){
+            startActivity(new Intent(this,ClassicalStudioActivity.class)
+                .putExtra("ik_classical_fixture",true));
+            return;
         }
         Artwork last=archive.current();
         if(last!=null && (last.style==Artwork.Style.FABLE || last.style==Artwork.Style.AIGUIDE))show(last,false);
@@ -126,7 +131,7 @@ public final class MainActivity extends Activity {
         dna.setOnClickListener(v->showDnaMenu());
         brandRow.addView(dna,new LinearLayout.LayoutParams(dp(90),dp(40)));
 
-        edition=text("ATELIER 005     /     LOKALT + VALGFRI AI",9,ACID,Typeface.NORMAL);
+        edition=text("ATELIER 006     /     OFFLINE + FOTO",9,ACID,Typeface.NORMAL);
         edition.setLetterSpacing(.13f);edition.setPadding(0,dp(21),0,0);
         top.addView(edition);
 
@@ -152,15 +157,16 @@ public final class MainActivity extends Activity {
         bottom.addView(primaryRow,new LinearLayout.LayoutParams(-1,dp(55)));
         createButton=button("✳  SKAP NYTT",true,false);
         evolveButton=button("↗  EVOLVER",false,false);
-        aiButton=button("✦  AI",false,false);
+        aiButton=button("✦  AKT/FOTO",false,false);
         primaryRow.addView(createButton,weighted(1.16f,0));
         primaryRow.addView(space(dp(7)));
         primaryRow.addView(evolveButton,weighted(.95f,0));
         primaryRow.addView(space(dp(7)));
-        primaryRow.addView(aiButton,weighted(.70f,0));
+        primaryRow.addView(aiButton,weighted(1.04f,0));
         createButton.setOnClickListener(v->newArtwork());
         evolveButton.setOnClickListener(v->evolveArtwork());
-        aiButton.setOnClickListener(v->openAiAtelier(null));
+        aiButton.setOnClickListener(v->startActivity(
+            new Intent(this,ClassicalStudioActivity.class)));
 
         LinearLayout secondaryRow=new LinearLayout(this);
         LinearLayout.LayoutParams secondParams=new LinearLayout.LayoutParams(-1,dp(45));
@@ -230,7 +236,8 @@ public final class MainActivity extends Activity {
     private void newArtwork(){compose(null);}
     private void evolveArtwork(){
         if(artwork!=null && artwork.style==Artwork.Style.AIGUIDE){
-            openAiAtelier(AiguideScene.intent(artwork.sceneJson));return;
+            shortToast("Importert bildemanus er låst. Bruk SKAP NYTT eller AKT/FOTO.");
+            return;
         }
         compose(artwork);
     }
@@ -269,86 +276,9 @@ public final class MainActivity extends Activity {
             }
         });
     }
-    /** Optional: API access is explicit; no credentials are saved on the phone. */
-    private void openAiAtelier(String revisionHint){
-        if(composing){shortToast("Kunstneren arbeider allerede.");return;}
-        LinearLayout form=new LinearLayout(this);
-        form.setOrientation(LinearLayout.VERTICAL);
-        form.setPadding(dp(20),dp(8),dp(20),dp(4));
-        EditText idea=new EditText(this);
-        idea.setTextSize(14);
-        idea.setMinLines(2);idea.setMaxLines(4);
-        idea.setHint("Gi et tema, eller la modellen finne på noe nytt");
-        if(revisionHint!=null)idea.setText("Lag en radikalt annerledes visuell tolkning av: "
-            +revisionHint);
-        form.addView(idea,new LinearLayout.LayoutParams(-1,-2));
-        EditText key=new EditText(this);
-        key.setTextSize(13);
-        key.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        key.setHint("OpenAI API-nøkkel (bare denne økten)");
-        form.addView(key,new LinearLayout.LayoutParams(-1,-2));
-        EditText model=new EditText(this);
-        model.setTextSize(13);
-        model.setSingleLine(true);
-        model.setText("gpt-6.1-terra");
-        model.setHint("Modell-ID");
-        form.addView(model,new LinearLayout.LayoutParams(-1,-2));
-        new AlertDialog.Builder(this)
-            .setTitle("AI ATELIER · aiguide")
-            .setMessage("Valgfri nettmodus. Din tekst sendes til modellleverandøren over HTTPS. "
-                +"Nøkkelen lagres aldri; bare forespørsel og ferdig bildemanus logges "
-                +"privat på telefonen. API-bruk kan koste penger.")
-            .setView(form)
-            .setNegativeButton("Avbryt",null)
-            .setPositiveButton("Komponer",(d,w)->{
-                String prompt=idea.getText().toString().trim();
-                String apiKey=key.getText().toString().trim();
-                String modelId=model.getText().toString().trim();
-                key.getText().clear();
-                generateAi(prompt,apiKey,modelId);
-            }).show();
-    }
-
-    private void generateAi(String prompt,String apiKey,String modelId){
-        if(composing)return;
-        if(apiKey.isEmpty()) {shortToast("API-nøkkel er påkrevd i nettmodus.");return;}
-        composing=true;
-        createButton.setEnabled(false);evolveButton.setEnabled(false);aiButton.setEnabled(false);
-        aiButton.setText("…  AI");
-        status.setText("AIGUIDE FORFATTER ET ORIGINALT BILDEMANUS…");
-        final int request=compositionToken.incrementAndGet();
-        final long seed=freshSeed();
-        composer.execute(()->{
-            try{
-                String scene=new AiguideClient(getApplicationContext()).ask(prompt,apiKey,modelId);
-                Artwork draft=new Artwork(seed,Artwork.Style.AIGUIDE,0,.5,.5,.5,.5,0,0,scene);
-                PixelCritic.Analysis image=StudioDirector.inspect(draft);
-                Artwork completed=new Artwork(seed,Artwork.Style.AIGUIDE,0,.5,.5,.5,.5,
-                    image.score,0,scene);
-                runOnUiThread(()->{
-                    if(isFinishing()||isDestroyed()||request!=compositionToken.get())return;
-                    composing=false;
-                    createButton.setEnabled(true);evolveButton.setEnabled(true);aiButton.setEnabled(true);
-                    aiButton.setText("✦  AI");
-                    show(completed,true);
-                    status.setText("AI-MANUS TEGNET I APPEN  ·  BILDEANALYSE "
-                        + Math.round(image.score*100) + "/100");
-                });
-            }catch(Exception|OutOfMemoryError ex){
-                final String reason=ex.getMessage()==null?ex.getClass().getSimpleName():ex.getMessage();
-                runOnUiThread(()->{
-                    if(isFinishing()||isDestroyed()||request!=compositionToken.get())return;
-                    composing=false;
-                    createButton.setEnabled(true);evolveButton.setEnabled(true);aiButton.setEnabled(true);
-                    aiButton.setText("✦  AI");
-                    status.setText("AI-ATELIER STOPPET · OFFLINE-MODUS FUNGERER FORTSATT");
-                    new AlertDialog.Builder(this).setTitle("AI-bilde ble ikke ferdig")
-                        .setMessage(reason.length()>350?reason.substring(0,350):reason)
-                        .setPositiveButton("OK",null).show();
-                });
-            }
-        });
-    }
+    // External model calls have been removed from the Android app.
+    // The original aiguide-dev CLI remains an independent, optional developer
+    // tool. In-app creation and classical studies need no account or network.
 
     private String displayTitle(Artwork piece){
         return piece.style==Artwork.Style.AIGUIDE
@@ -396,8 +326,8 @@ public final class MainActivity extends Activity {
         FrameLayout wrap=new FrameLayout(this);
         wrap.setPadding(dp(18),0,dp(18),0);
         wrap.addView(input,new FrameLayout.LayoutParams(-1,-2));
-        new AlertDialog.Builder(this).setTitle("Importer aiguide JSON-manus")
-            .setMessage("Samme format som Python-bibliotekets CLI-bro. Import gjøres offline.")
+        new AlertDialog.Builder(this).setTitle("Importer grafikkmanus (JSON)")
+            .setMessage("Importer tidligere AI-skapte eller egne vektorverk. Kun lokal lesing, ingen modellkall.")
             .setView(wrap)
             .setNegativeButton("Avbryt",null)
             .setPositiveButton("Tegn",(d,w)->{
@@ -422,7 +352,7 @@ public final class MainActivity extends Activity {
         status.setText((next.style==Artwork.Style.AIGUIDE ? "BILDEANALYSE   " : "VERKETS SELEKSJONSSCORE   ")
             + Math.round(next.score*100) + "/100"
             + (next.hasParent ? "   ·   FRA " + String.format(Locale.ROOT,"%016X",next.parentSeed).substring(0,6) : ""));
-        edition.setText("ATELIER 005     /     VERK " + archive.recent().size()
+        edition.setText("ATELIER 006     /     VERK " + archive.recent().size()
             + (next.style==Artwork.Style.AIGUIDE ? " · AIGUIDE" : " · LOKALT"));
         likeButton.setText(archive.isSaved(next)
             ? (next.style==Artwork.Style.AIGUIDE?"♥  LAGRET":"♥  LÆRT") :
@@ -448,7 +378,7 @@ public final class MainActivity extends Activity {
         }
         if(artwork.style==Artwork.Style.AIGUIDE){
             likeButton.setText("✕  AVVIST");
-            shortToast("Avvist lokalt. Ekstern AI blir ikke trent. Bruk ✦ AI for et nytt forsøk.");
+            shortToast("Grafikkmanus avvist lokalt. Bruk SKAP NYTT for et nytt verk.");
             return;
         }
         shortToast("Registrert: denne ideen skal veie mindre. Skaper et nytt verk.");
@@ -459,7 +389,7 @@ public final class MainActivity extends Activity {
         new AlertDialog.Builder(this).setTitle("KUNSTENS DNA")
             .setItems(new String[]{"Dagens verk · samme for alle (UTC)", "Kunstnerens egenkritikk",
                 "Finn forelderverket", "Kopier verket som DNA", "Importer et DNA",
-                "Importer AI-bildemanus (JSON)", "Se tegnemotoren · ingen API-nøkkel",
+                "Importer grafikkmanus (JSON)", "Se tegnemotoren · uten nett",
                 "Om eksperimentet"},
                 (d,which)->{
                     if(which==0)dailyEdition();
@@ -557,12 +487,14 @@ public final class MainActivity extends Activity {
                 + "Den bruker ingen av dine tidligere prosjekter eller motiver.\n\n"
                 + "LÆR gir én positiv tilbakemelding. Hold LÆR inne for å AVVISE "
                 + "motivet og ideen, og skape et nytt forsøk.\n\n"
-                + "Offline-modusen er regelbasert og fungerer uten nett. "
-                + "AI-knappen bruker aiguide-mal og en ekstern tekstmodell som lager et konkret "
-                + "tegnbart bildemanus. Bruk av API krever egen nøkkel og nettverk. "
-                + "Du kan importere et bildemanus fra Python-aiguide uten API-kall i appen. "
-                + "Nøkler blir ikke lagret; synlig AI-forespørsel og resultat får lokal logg. "
-                + "Bildescoren er bare strukturell analyse, ikke kunstnerisk forståelse.")
+                + "Hele Android-appen fungerer nå uten nett og API-nøkler. "
+                + "AKT/FOTO åpner et klassisk atelier med kroppsstudier, og gjenskaper "
+                + "faktiske fotografier du selv velger ved hjelp av Androids bildedekoder. "
+                + "Et fotografi kan tolkes som olje, kull eller sepia, og bildet blir værende lokalt. "
+                + "Fotorealistisk gjengivelse betyr trofast reproduksjon av importerte bildepiksler, "
+                + "ikke syntetisk generering eller en trent diffusjonsmodell. "
+                + "Egne grafikkmanus fra aiguide kan fortsatt importeres offline. "
+                + "Bildescoren er strukturell, ikke kunstnerisk forståelse.")
             .setPositiveButton("Tilbake til atelieret",null).show();
     }
     private void openArchive(){
