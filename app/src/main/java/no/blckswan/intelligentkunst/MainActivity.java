@@ -34,12 +34,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import no.blckswan.intelligentkunst.core.ArtDirector;
 import no.blckswan.intelligentkunst.core.Artwork;
 import no.blckswan.intelligentkunst.core.CritiqueReport;
 import no.blckswan.intelligentkunst.core.DailyEdition;
+import no.blckswan.intelligentkunst.core.PixelCritic;
 import no.blckswan.intelligentkunst.render.RenderEngine;
+import no.blckswan.intelligentkunst.render.StudioDirector;
 import no.blckswan.intelligentkunst.storage.ArtArchive;
 import no.blckswan.intelligentkunst.ui.ArtworkView;
 
@@ -50,6 +53,9 @@ public final class MainActivity extends Activity {
     private static final int ACID=0xFFD9FB81;
     private static final int DARK=0xFF121519;
     private final ArtDirector director=new ArtDirector();
+    private final StudioDirector studio=new StudioDirector();
+    private final ExecutorService composer=Executors.newSingleThreadExecutor();
+    private final AtomicInteger compositionToken=new AtomicInteger();
     private final ExecutorService exports=Executors.newSingleThreadExecutor();
     private final SecureRandom random=new SecureRandom();
 
@@ -60,6 +66,7 @@ public final class MainActivity extends Activity {
     private TextView createButton, evolveButton, likeButton, exportButton, archiveButton;
     private LinearLayout top, bottom;
     private boolean exporting=false;
+    private boolean composing=false;
     private boolean theaterMode=false;
 
     @Override public void onCreate(Bundle state) {
@@ -71,8 +78,8 @@ public final class MainActivity extends Activity {
         archive=new ArtArchive(this);
         constructUi();
         Artwork last=archive.current();
-        if(last!=null)show(last,false);
-        else newArtwork();
+        if(last!=null && last.style==Artwork.Style.FABLE)show(last,false);
+        else newArtwork(); // old works remain in the archive; first launch shows the new painter
     }
 
     private void constructUi() {
@@ -107,7 +114,7 @@ public final class MainActivity extends Activity {
         dna.setOnClickListener(v->showDnaMenu());
         brandRow.addView(dna,new LinearLayout.LayoutParams(dp(90),dp(40)));
 
-        edition=text("ATELIER 001     /     LOKALT · UTEN SKY",9,ACID,Typeface.NORMAL);
+        edition=text("ATELIER 003     /     LOKALT · UTEN SKY",9,ACID,Typeface.NORMAL);
         edition.setLetterSpacing(.13f);edition.setPadding(0,dp(21),0,0);
         top.addView(edition);
 
@@ -202,10 +209,42 @@ public final class MainActivity extends Activity {
     }
 
     private long freshSeed(){return random.nextLong() ^ SystemClock.elapsedRealtimeNanos();}
-    private void newArtwork(){show(director.create(freshSeed(),archive.recent(),archive.taste()),true);}
-    private void evolveArtwork(){
-        if(artwork==null){newArtwork();return;}
-        show(director.evolve(artwork,freshSeed(),archive.recent(),archive.taste()),true);
+    private void newArtwork(){compose(null);}
+    private void evolveArtwork(){compose(artwork);}
+
+    /** One in-flight job; rendering and evaluation never block the UI thread. */
+    private void compose(Artwork parent){
+        if(composing)return;
+        composing=true;
+        createButton.setEnabled(false);evolveButton.setEnabled(false);
+        createButton.setText("…  TENKER");
+        status.setText("MALER 12 ULIKE KANDIDATER  ·  SER PÅ FERDIGE BILDER");
+        final long seed=freshSeed();
+        final List<Artwork> history=archive.recent();
+        final ArtDirector.Taste taste=archive.taste();
+        final int request=compositionToken.incrementAndGet();
+        composer.execute(()->{
+            try{
+                StudioDirector.Selection result=studio.create(seed,history,taste,parent);
+                runOnUiThread(()->{
+                    if(isFinishing()||isDestroyed()||request!=compositionToken.get())return;
+                    composing=false;
+                    createButton.setEnabled(true);evolveButton.setEnabled(true);
+                    createButton.setText("✳  SKAP NYTT");
+                    show(result.artwork,true);
+                    status.setText("12 BILDER SETT  ·  KURATERT FRA PIKSLER  "
+                        + Math.round(result.artwork.score*100) + "/100");
+                });
+            }catch(RuntimeException|OutOfMemoryError error){
+                runOnUiThread(()->{
+                    if(isFinishing()||isDestroyed()||request!=compositionToken.get())return;
+                    composing=false;
+                    createButton.setEnabled(true);evolveButton.setEnabled(true);
+                    createButton.setText("✳  SKAP NYTT");
+                    status.setText("KUNSTNEREN MÅTTE AVBRYTE  ·  TRYKK IGJEN");
+                });
+            }
+        });
     }
     private void show(Artwork next,boolean save){
         artwork=next;
@@ -214,11 +253,10 @@ public final class MainActivity extends Activity {
         metadata.setText(next.style.label + "   /   GEN " + String.format(Locale.ROOT,"%02d",next.generation)
             + "   /   " + next.id().substring(0,6));
         title.setText(next.title());
-        narration.setText(next.style.thought);
-        status.setText("42 SKISSER VURDERT   ·   ESTETISK HEURISTIKK "
-            + Math.round(next.score*100) + "/100"
+        narration.setText(next.intention());
+        status.setText("VERKETS SELEKSJONSSCORE   " + Math.round(next.score*100) + "/100"
             + (next.hasParent ? "   ·   FRA " + String.format(Locale.ROOT,"%016X",next.parentSeed).substring(0,6) : ""));
-        edition.setText("ATELIER 001     /     VERK " + archive.recent().size() + " · UTEN SKY");
+        edition.setText("ATELIER 003     /     VERK " + archive.recent().size() + " · UTEN SKY");
         likeButton.setText(archive.isSaved(next) ? "♥  LÆRT" : "♡  LÆR");
     }
     private void like(){
@@ -264,15 +302,28 @@ public final class MainActivity extends Activity {
 
     private void showCritique(){
         if(artwork==null)return;
-        CritiqueReport report=CritiqueReport.evaluate(artwork,archive.recent(),archive.taste());
-        new AlertDialog.Builder(this).setTitle("Kunstnerens egenkritikk")
-            .setMessage("SCORE DA VERKET BLE VALGT: " + Math.round(artwork.score*100) + "/100\n\n"
-                + report.explain() + "\n\n"
-                + (artwork.hasParent ? "EVOLVERT FRA: " + String.format(Locale.ROOT,"%016X",artwork.parentSeed)
-                   + "\nGENERASJON: " + artwork.generation + "\n\n" : "")
-                + "Ny vurdering bruker gjeldende samling og smak. Tallene er åpne, programmerte "
-                + "heuristikker, ikke en kunstig intelligens som ser eller forstår bildet.")
-            .setPositiveButton("Tilbake",null).show();
+        final Artwork subject=artwork;
+        final CritiqueReport dna=CritiqueReport.evaluate(subject,archive.recent(),archive.taste());
+        status.setText("UNDERSØKER FAKTISKE BILDEPIKSLER…");
+        composer.execute(()->{
+            try{
+                final PixelCritic.Analysis pixels=StudioDirector.inspect(subject);
+                runOnUiThread(()->{
+                    if(isFinishing()||isDestroyed())return;
+                    if(artwork==subject)status.setText("BILDEANALYSE FULLFØRT");
+                    new AlertDialog.Builder(this).setTitle("Første ekte visuelle kritikk")
+                        .setMessage("UTVALGSSCORE: " + Math.round(subject.score*100) + "/100\n\n"
+                            + pixels.explain() + "\n\n"
+                            + "DNA-RUBRIKK (UTEN BILDE): " + Math.round(dna.total*100) + "/100\n\n"
+                            + (subject.hasParent ? "OPPHAV: " + String.format(Locale.ROOT,"%016X",subject.parentSeed) + "\n\n" : "")
+                            + "Appen måler bildestruktur, ikke skjønnhet eller mening. "
+                            + "De narrative motivene er komponert fra et åpent regelsett.")
+                        .setPositiveButton("Tilbake",null).show();
+                });
+            }catch(RuntimeException|OutOfMemoryError error){
+                runOnUiThread(()->shortToast("Kunne ikke analysere dette verket."));
+            }
+        });
     }
 
     private void toggleTheater(){
@@ -301,13 +352,12 @@ public final class MainActivity extends Activity {
     private void about(){
         new AlertDialog.Builder(this).setTitle("Et kunstig blikk")
             .setMessage("Kan et program utvikle et eget kunstnerisk uttrykk?\n\n"
-                + "Hver gang du trykker SKAP, foreslår kunstneren 42 komposisjoner. "
-                + "En åpent definert estetisk heuristikk vurderer rytme, tetthet, asymmetri, "
-                + "bevegelse og forskjellen fra tidligere verk.\n\n"
-                + "LÆR påvirker neste utvalg. EVOLVER muterer DNA-et til det valgte bildet. "
-                + "Alle verk kan gjenskapes fra samme DNA.\n\n"
-                + "Dette er evolusjonær generativ kunst, ikke en språkmodell eller en objektiv "
-                + "dom over kunst. Ingen konto, server, sporing eller skjulte API-er.")
+                + "ATELIER 003 skisserer 12 faktiske motiver, hver med 42 interne DNA-forslag. "
+                + "Bildene males i miniatyr, undersøkes og sammenliknes. Kontrast, fokus, "
+                + "negative rom, markeringer og visuell ulikhet påvirker hvilket bilde som velges.\n\n"
+                + "Motivene har en intensjon: fyrtårn, dør, tre eller hval. "\n                + "Et verk utvikler seg gjennom EVOLVER og kan arve motivet fra tidligere kunst.\n\n"
+                + "Dette er håndprogrammert generativ kunst med bildepikselanalyse, "
+                + "ikke en trent generativ bildemodell. Ingen nettverkstillatelser.")
             .setPositiveButton("Tilbake til atelieret",null).show();
     }
     private void openArchive(){
@@ -405,6 +455,8 @@ public final class MainActivity extends Activity {
     private void shortToast(String message){Toast.makeText(this,message,Toast.LENGTH_SHORT).show();}
     @Override protected void onDestroy(){
         if(gallery!=null)gallery.dispose();
+        compositionToken.incrementAndGet();
+        composer.shutdownNow();
         exports.shutdown();super.onDestroy();
     }
 }
