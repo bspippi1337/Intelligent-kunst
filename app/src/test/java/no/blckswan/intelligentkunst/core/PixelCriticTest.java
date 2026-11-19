@@ -57,6 +57,22 @@ public final class PixelCriticTest {
         assertEquals(taste.reward(loved),restored.reward(loved),0);
     }
 
+    @Test public void rejectionMovesScoresAwayFromBoringIdeas() {
+        ArtDirector.Taste taste=new ArtDirector.Taste();
+        Artwork ignored=new ArtDirector().create(700L,
+            java.util.Collections.emptyList(),taste);
+        double before=taste.reward(ignored);
+        for(int i=0;i<8;i++)taste.dislike(ignored);
+        double after=taste.reward(ignored);
+        assertTrue("negative feedback must actually alter concept reward", after<before);
+        ArtDirector.Taste restored=new ArtDirector.Taste();
+        restored.load(taste.styleVotes(),taste.paletteVotes(),
+            taste.objectVotes(),taste.propositionVotes(),
+            taste.objectRejections(),taste.propositionRejections(),
+            taste.paletteRejections());
+        assertEquals(after,restored.reward(ignored),0);
+    }
+
     @Test public void backwardsCompatibleFamilyHasNarrativeIntent() {
         for(int i=0;i<500;i++) {
             Artwork art=new ArtDirector().create(i,java.util.Collections.emptyList(),new ArtDirector.Taste());
