@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.6.0 · No keys, Classical Atelier & Photo Studies · 2026-11-19
+
+- Removed Android API-key form and OpenAI HTTP client entirely. The APK no longer declares INTERNET permission; fully offline by default and by Android sandbox enforcement.
+- Add a first-class **KLASSISK ATELIER** for independently created academic adult nude figure studies. Two pose families, seeded variations, anatomy, volume, chiaroscuro and optional charcoal style. This is procedural classical drawing, not AI photorealistic figure synthesis.
+- Import user-chosen photographs via the Android system document picker and persisted read permission; no upload, credentials or invasive media permissions.
+- Faithful photo mode displays real source pixels without fabricating missing details. Oil, charcoal and sepia modes offer local material interpretation of the selected source.
+- Native PNG export to MediaStore, respecting source photo aspect ratio with bounded decoding size, and 2160 x 3840 figure export.
+- Keep local conceptual generation, 12-candidate pixel selection, evolution, gallery, legacy DNA and offline JSON graphics import intact.
+- Historical Python aiguide bridge remains independently available for developers, not required, advertised as separate key-requiring workflow.
+- Emulator smoke now includes local figure and photography modes in addition to prior generation and evolution checks.
+
+**Scope and honesty:** A new photorealistic person from pure text needs a real local neural generative model, not a fake illustration filter. 0.6.0 supplies faithful photorealistic *reproduction of supplied photos* and classical on-device nude figure paintings, not synthetic text-to-image realism.
+
 ## 0.5.1 · Conceptual continuity · 2026-11-19
 
 - EVOLVER now preserves the parent's visual subject, rather than randomly picking a new object while only inheriting cosmetic DNA.
