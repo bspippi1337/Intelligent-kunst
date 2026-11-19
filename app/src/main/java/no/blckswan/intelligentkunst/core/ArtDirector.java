@@ -105,12 +105,20 @@ public final class ArtDirector {
     /** Genetic mutation: the offspring always has its own seed and a meaningful relationship to its parent. */
     public Artwork evolve(Artwork parent, long seed, List<Artwork> recent, Taste taste) {
         SplittableRandom random = new SplittableRandom(seed ^ parent.seed);
+        // A lineage develops an actual visual thought: same subject, sometimes
+        // same physical contradiction. It no longer redraws an unrelated object.
+        StoryPlan.Idea ancestor = parent.style == Artwork.Style.FABLE
+            ? StoryPlan.generate(parent.seed) : null;
+        boolean preservePremise=random.nextDouble()<.68;
         Artwork best = null;
         double bestScore = -Double.MAX_VALUE;
         for (int i = 0; i < CANDIDATES; i++) {
-            Artwork.Style style = Artwork.Style.FABLE; // even legacy parents can become stories
+            Artwork.Style style = Artwork.Style.FABLE; // legacy parents can become stories
             int palette = random.nextDouble() < 0.76 ? parent.palette : random.nextInt(Artwork.PALETTES.length);
-            Artwork child = new Artwork(random.nextLong(), style, palette,
+            long draftSeed=random.nextLong();
+            long childSeed=ancestor==null ? draftSeed
+                : ConceptLineage.childSeed(draftSeed,ancestor,preservePremise);
+            Artwork child = new Artwork(childSeed, style, palette,
                 mutate(random, parent.energy), mutate(random, parent.complexity),
                 mutate(random, parent.balance), mutate(random, parent.drift), 0, parent.generation + 1, parent.seed);
             double score = critique(child, recent, taste);
