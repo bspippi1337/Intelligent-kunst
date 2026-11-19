@@ -35,6 +35,10 @@ Ingen av motivene velges på grunnlag av brukerhistorikk eller personlige refera
 
 **Ærlig avgrensning:** dette er fremdeles en begrenset *regelbasert* oppfinner med bildepikselanalyse. Det er ikke en trent, åpent assosierende bildemodell, og pixel-statistikk alene kan ikke måle kunstnerisk kvalitet. Hvis målet er et virkelig overraskende kunstnersubjekt, må videre versjoner øke handlingsrom, kritikk og læring utover disse faste byggesteinene.
 
+## Atelier 006.1 · Etter visuell Android-kontroll
+
+I Android-emulatoren var den første modellen tydelig for stilisert, med feil hårmateriale, kraftige høylys og et toppfelt som kolliderte med systemets statuslinje. Versjon **0.6.1** retter dette og bruker **akademisk kulltegning** som utgangspunkt, med olje/sepia som valg. Figurene er fremdeles original, prosedyrebasert illustrasjon; realistiske bilder kommer fra brukerens faktiske fotografier, ikke fra et påstått trent nevralt nettverk.
+
 ## Atelier 006 · Klassisk akt og fotografisk referanse, helt offline
 
 Trykk **✦ AKT/FOTO** i appen. Dette åpner et eget verksted uten konto og uten noen API-nøkkel.
