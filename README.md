@@ -35,6 +35,12 @@ Ingen av motivene velges på grunnlag av brukerhistorikk eller personlige refera
 
 **Ærlig avgrensning:** dette er fremdeles en begrenset *regelbasert* oppfinner med bildepikselanalyse. Det er ikke en trent, åpent assosierende bildemodell, og pixel-statistikk alene kan ikke måle kunstnerisk kvalitet. Hvis målet er et virkelig overraskende kunstnersubjekt, må videre versjoner øke handlingsrom, kritikk og læring utover disse faste byggesteinene.
 
+## Atelier 005.1 · Idéer får en utviklingshistorie
+
+**EVOLVER** beholder nå objektet i forelderverket. Ny generasjon søker en ny tegning av den samme visuelle idéen, og kan av og til undersøke en annen fysisk motsetning med samme objekt. Slektskap er dermed noe man kan se i bildene, ikke bare et foreldrenummer i DNA. En serie tester bekrefter dette for 180 generasjoner.
+
+Vi har også kontrollert seks forskjellige komposisjoner i en ekte Android-emulator, samt det bundne tegneeksempelet uten API-nøkkel. Brukerens estetiske dom er fortsatt viktigere enn intern poengsum.
+
 ## Atelier 005 · Fritt tegnede former, ikke bare clipart
 
 AI-bildemanus kan nå bruke **sammenhengende, fylte Bézier-former** med kubiske og kvadratiske kurver, egne konturer, og **lineære eller radiale fargeforløp**. Hver tegningsinstruksjon valideres før den tegnes. Ingen programkode, eksterne bildekilder eller ubegrensede tegningssekvenser.
