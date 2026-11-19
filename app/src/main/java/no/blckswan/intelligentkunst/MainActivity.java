@@ -29,6 +29,9 @@ import android.widget.Toast;
 import android.text.InputType;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.io.OutputStream;
 import java.security.SecureRandom;
 import java.util.List;
@@ -346,6 +349,40 @@ public final class MainActivity extends Activity {
             ? AiguideScene.title(piece.sceneJson) : piece.title();
     }
 
+    /** A deliberately hand-authored renderer demo. Never presented as AI output. */
+    private void loadDemoScene(){
+        if(composing){shortToast("Kunstneren arbeider allerede.");return;}
+        composing=true;
+        status.setText("ÅPNER ET EKSEMPEL UTEN NETT ELLER API-NØKKEL…");
+        final int request=compositionToken.incrementAndGet();
+        composer.execute(()->{
+            try(InputStream input=getAssets().open("demo_scene.json");
+                ByteArrayOutputStream bytes=new ByteArrayOutputStream()){
+                byte[] buffer=new byte[4096];int n;
+                while((n=input.read(buffer))!=-1){
+                    if(bytes.size()+n>18000)throw new IOException("Demo is too large");
+                    bytes.write(buffer,0,n);
+                }
+                String json=AiguideScene.validate(new String(bytes.toByteArray(),StandardCharsets.UTF_8));
+                long seed=freshSeed();
+                Artwork draft=new Artwork(seed,Artwork.Style.AIGUIDE,0,.5,.5,.5,.5,0,0,json);
+                PixelCritic.Analysis visual=StudioDirector.inspect(draft);
+                Artwork ready=new Artwork(seed,Artwork.Style.AIGUIDE,0,.5,.5,.5,.5,visual.score,0,json);
+                runOnUiThread(()->{
+                    if(isFinishing()||isDestroyed()||request!=compositionToken.get())return;
+                    composing=false;show(ready,true);
+                    status.setText("DEMO · MANUELT KOMPONERT · IKKE AI-GENERERT");
+                });
+            }catch(Exception|OutOfMemoryError error){
+                runOnUiThread(()->{
+                    if(isFinishing()||isDestroyed()||request!=compositionToken.get())return;
+                    composing=false;status.setText("DEMO KUNNE IKKE ÅPNES");
+                    shortToast("Feil i lokal demo. Rapportér dette som en bug.");
+                });
+            }
+        });
+    }
+
     private void importAiScene(){
         EditText input=new EditText(this);
         input.setMinLines(4);input.setMaxLines(9);input.setTextSize(12);
@@ -405,7 +442,8 @@ public final class MainActivity extends Activity {
         new AlertDialog.Builder(this).setTitle("KUNSTENS DNA")
             .setItems(new String[]{"Dagens verk · samme for alle (UTC)", "Kunstnerens egenkritikk",
                 "Finn forelderverket", "Kopier verket som DNA", "Importer et DNA",
-                "Importer AI-bildemanus (JSON)", "Om eksperimentet"},
+                "Importer AI-bildemanus (JSON)", "Se tegnemotoren · ingen API-nøkkel",
+                "Om eksperimentet"},
                 (d,which)->{
                     if(which==0)dailyEdition();
                     else if(which==1)showCritique();
@@ -416,7 +454,8 @@ public final class MainActivity extends Activity {
                         shortToast("DNA kopiert. Dette kan gjenskape verket.");
                     }else if(which==4)importDna();
                     else if(which==5)importAiScene();
-                    else if(which==6)about();
+                    else if(which==6)loadDemoScene();
+                    else if(which==7)about();
                 }).show();
     }
 
