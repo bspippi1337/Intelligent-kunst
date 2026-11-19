@@ -232,17 +232,28 @@ public final class MainActivity extends Activity {
     private void showDnaMenu(){
         new AlertDialog.Builder(this).setTitle("KUNSTENS DNA")
             .setItems(new String[]{"Dagens verk · samme for alle (UTC)", "Kunstnerens egenkritikk",
-                "Kopier verket som DNA", "Importer et DNA", "Om eksperimentet"},
+                "Finn forelderverket", "Kopier verket som DNA", "Importer et DNA", "Om eksperimentet"},
                 (d,which)->{
                     if(which==0)dailyEdition();
                     else if(which==1)showCritique();
-                    else if(which==2&&artwork!=null){
+                    else if(which==2)openParent();
+                    else if(which==3&&artwork!=null){
                         ClipboardManager clips=(ClipboardManager)getSystemService(Context.CLIPBOARD_SERVICE);
                         clips.setPrimaryClip(ClipData.newPlainText("Kunst-DNA",artwork.encode()));
                         shortToast("DNA kopiert. Dette kan gjenskape verket.");
-                    }else if(which==3)importDna();
-                    else if(which==4)about();
+                    }else if(which==4)importDna();
+                    else if(which==5)about();
                 }).show();
+    }
+
+    private void openParent(){
+        if(artwork==null||!artwork.hasParent){shortToast("Dette verket har ingen registrert forelder.");return;}
+        Artwork parent=archive.findBySeed(artwork.parentSeed);
+        if(parent!=null)show(parent,true);
+        else new AlertDialog.Builder(this).setTitle("Et spor i historien")
+            .setMessage("Forelderens DNA-ID er " + String.format(Locale.ROOT,"%016X",artwork.parentSeed)
+                + ". Det opprinnelige verket ligger ikke lenger i det lokale arkivet.")
+            .setPositiveButton("OK",null).show();
     }
 
     private void dailyEdition(){
