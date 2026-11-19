@@ -12,6 +12,12 @@ android {
         versionName '0.5.0'
     }
     buildTypes {
+        debug {
+            // CI debug signatures may rotate. Make test builds install alongside
+            // the existing app rather than asking users to uninstall their gallery.
+            applicationIdSuffix '.lab'
+            versionNameSuffix '-lab'
+        }
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
