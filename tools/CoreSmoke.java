@@ -41,6 +41,14 @@ public class CoreSmoke {
             check(story.style == Artwork.Style.FABLE, "new art tells stories");
             check(!story.intention().isEmpty(), "story has intentional subject");
         }
+        String scene = "{\\\"version\\\":1,\\\"title\\\":\\\"Unexpected form\\\",\\\"elements\\\":[]}";
+        Artwork modelWork = new Artwork(10022L, Artwork.Style.AIGUIDE, 0,
+            .5,.5,.5,.5,.9,0,scene);
+        check(modelWork.encode().startsWith("3:"), "AI artwork uses DNA v3");
+        check(Artwork.decode(modelWork.encode()).sceneJson.equals(scene),
+            "AI script survives offline DNA round-trip");
+        check(Artwork.decode(modelWork.encode()).encode().equals(modelWork.encode()),
+            "AI script reproduces deterministically");
         FieldNoise noise = new FieldNoise(1337);
         for (int i = -300; i < 300; i++) {
             double n = noise.fractal(i / 17.0, i / 29.0);
