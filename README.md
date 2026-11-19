@@ -17,15 +17,19 @@
 
 **Intelligent Kunst** er en helt native Android-app som skaper originale, reproducerbare generative verk. Den sender aldri data til en sky. Ingen innlogging, API-nøkler, reklame, analyse-SDK-er eller nettverkstillatelser.
 
-Hvert trykk på **SKAP NYTT** starter en liten kunstnerisk utvelgelse:
+Hvert trykk på **SKAP NYTT** setter nå et lite digitalt atelier i arbeid:
 
-1. Kunstneren lager **42 forskjellige komposisjonsforslag** med et evolusjonært genom.
-2. En transparent, heuristisk *art director* vurderer rytme, kompleksitet, asymmetri, bevegelse og originalitet i forhold til nylige verk.
-3. Ett forslag blir valgt og malt på Android Canvas i en av seks distinkte visuelle stiler.
-4. Du kan **EVOLVERE** verket, lære kunstneren preferansene dine med **♡ LÆR**, lagre favoritter i en lokal samling og eksportere som **2160 × 3840 PNG**.
-5. Alle verk har et **DNA** som kan kopieres, deles og importeres slik at samme verk kan gjenskapes på en annen telefon.
+1. En regelbasert idémotor skaper **12 komposisjoner med motiver**. Hver av dem er valgt blant **42 DNA-forslag**.
+2. Alle tolv får sin egen ferdig rendrerte **192 × 320** pixelskisse. Ingen skisser vurderes bare ved å lese sine parametere.
+3. En åpen, lokal `PixelCritic` måler **lyskontrast, blikkfang, tomrom, tegningsgrad, plassering** og likhet med siste bildene.
+4. En kombinert poengsum velger ett bilde. Du kan **EVOLVERE**, gi tilbakemelding med **♡ LÆR**, se kritikken, eksportere PNG, kopiere DNA eller samle bilder.
+5. Eksport gir høyoppløselig **2160 × 3840 PNG**. Alt fungerer frakoblet.
 
-Dette er et **eksperiment i algoritmisk kreativitet**, ikke et forsøk på å selge heuristikker som en trent språkmodell eller som en objektiv estetisk dom. Scoren er en intern utvelgelsesfunksjon og ikke en vurdering av kunstnerisk verdi.
+### Motiver, ikke skjermsparere
+
+Den nye standardstilen **FORTELLING** har fire iscenesatte, komposisjonsstyrte verdener: et enslig fyrtårn som sender et lys gjennom mørket, en dør med en vandrer, et tre som ennå står, og en hval over et lite fartøy. Scenene tegnes som små kunsttrykk med trykksverte, skyggemasser, kontrollerte paletter, perspektiv, fortellende skala og bevisst ubrukt papir. Den gamle geometriske seksstils-motoren er fortsatt med for DNA-kompatibilitet, men brukes ikke ved ny generering.
+
+**Ærlig avgrensning:** dette er fortsatt *regelbasert* generativ kunst. Pikselkritikken ser på bildet som tall og kan ikke skjønne hva et fyrtårn betyr, eller hvorfor et verk er rørende. En trent bildekunstmodell krever en annen arkitektur. Målet for denne versjonen er reelle motiver og en etterprøvbar visuell feedback-loop, ikke å selge «42 tilfeldig valgte parametere» som intelligens.
 
 ## Atelier 002 · Dagens verk, kritikk og avstamning
 
@@ -35,7 +39,7 @@ Dette er et **eksperiment i algoritmisk kreativitet**, ikke et forsøk på å se
 - **Utstillingsmodus:** trykk på selve kunstverket for å gjemme grensesnittet. Trykk igjen for å hente det tilbake.
 - **Smak uten juks:** ett verk kan maksimalt gi én lokal stemme. Ingen konto, ingen profil utenfor enheten.
 
-## Seks uttrykk
+## Seks historiske uttrykk (DNA-kompatibilitet)
 
 | Stil | Visuell idé |
 |---|---|
@@ -73,10 +77,14 @@ app/src/main/java/no/blckswan/intelligentkunst/
 │   ├── Artwork.java        # uforanderlig, versjonert genom og paletter
 │   ├── ArtDirector.java    # kandidater, evolusjon og smak
 │   ├── CritiqueReport.java # åpen og kontrollerbar utvelgelsesrubrikk
+│   ├── StoryPlan.java    # bevisst motiv og fortelling
+│   ├── PixelCritic.java  # faktisk bildepikselanalyse
 │   ├── DailyEdition.java   # felles UTC-dagsverk uten nett
 │   └── FieldNoise.java     # deterministisk, glatt prosedyrestøy
 ├── render/
-│   └── RenderEngine.java   # seks native Android Canvas-malere
+│   ├── RenderEngine.java   # DNA-kompatibilitet og routing
+│   ├── StoryPainter.java   # typografisk, narrativ trykk-kunst
+│   └── StudioDirector.java # tolv forhåndsvisninger og visuell utvelgelse
 ├── ui/
 │   └── ArtworkView.java    # asynkron rendering, caching, crossfade og berøring
 ├── storage/
