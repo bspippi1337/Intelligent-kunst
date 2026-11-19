@@ -58,7 +58,7 @@ public final class ArtDirector {
             int palette = random.nextDouble() < 0.76 ? parent.palette : random.nextInt(Artwork.PALETTES.length);
             Artwork child = new Artwork(random.nextLong(), style, palette,
                 mutate(random, parent.energy), mutate(random, parent.complexity),
-                mutate(random, parent.balance), mutate(random, parent.drift), 0, parent.generation + 1);
+                mutate(random, parent.balance), mutate(random, parent.drift), 0, parent.generation + 1, parent.seed);
             double score = critique(child, recent, taste);
             if (score > bestScore) { bestScore = score; best = child; }
         }
@@ -70,33 +70,16 @@ public final class ArtDirector {
     }
 
     private static Artwork withScore(Artwork a, double score) {
-        return new Artwork(a.seed, a.style, a.palette, a.energy, a.complexity,
-            a.balance, a.drift, Math.max(0, Math.min(1, score)), a.generation);
+        double bounded = Math.max(0, Math.min(1, score));
+        return a.hasParent
+            ? new Artwork(a.seed, a.style, a.palette, a.energy, a.complexity,
+                a.balance, a.drift, bounded, a.generation, a.parentSeed)
+            : new Artwork(a.seed, a.style, a.palette, a.energy, a.complexity,
+                a.balance, a.drift, bounded, a.generation);
     }
 
-    /** Heuristic, legible rules: rhythm, spatial tension, complexity and novelty. */
+    /** All critical dimensions and their weights live in CritiqueReport. */
     public double critique(Artwork a, List<Artwork> recent, Taste taste) {
-        double rhythm = 1 - Math.abs(a.energy - 0.58);
-        double detail = 1 - Math.abs(a.complexity - 0.62);
-        double asymmetry = 1 - Math.abs(a.balance - 0.68);
-        double motion = 1 - Math.abs(a.drift - 0.53);
-        double novelty = 1;
-        int seen = 0;
-        if (recent != null) {
-            for (Artwork r : recent) {
-                if (seen++ >= 12) break;
-                double d = (r.style == a.style ? 0 : 0.45)
-                    + (r.palette == a.palette ? 0 : 0.22)
-                    + Math.abs(r.energy - a.energy) * 0.11
-                    + Math.abs(r.complexity - a.complexity) * 0.11
-                    + Math.abs(r.balance - a.balance) * 0.11;
-                novelty = Math.min(novelty, d);
-            }
-        }
-        double noise = (Long.remainderUnsigned(a.seed ^ (a.seed >>> 29), 1000)) / 1000.0;
-        double fitness = rhythm * 0.24 + detail * 0.20 + asymmetry * 0.18
-            + motion * 0.12 + novelty * 0.14 + noise * 0.04
-            + (taste == null ? 0 : taste.reward(a));
-        return Math.max(0, Math.min(1, fitness));
+        return CritiqueReport.evaluate(a, recent, taste).total;
     }
 }
