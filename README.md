@@ -25,16 +25,18 @@ Hvert trykk på **SKAP NYTT** setter nå et lite digitalt atelier i arbeid:
 4. En kombinert poengsum velger ett bilde. Du kan **EVOLVERE**, gi tilbakemelding med **♡ LÆR**, se kritikken, eksportere PNG, kopiere DNA eller samle bilder.
 5. Eksport gir høyoppløselig **2160 × 3840 PNG**. Alt fungerer frakoblet.
 
-### Motiver, ikke skjermsparere
+### En fysisk idé, et visuelt utsagn
 
-Den nye standardstilen **FORTELLING** har fire iscenesatte, komposisjonsstyrte verdener: et enslig fyrtårn som sender et lys gjennom mørket, en dør med en vandrer, et tre som ennå står, og en hval over et lite fartøy. Scenene tegnes som små kunsttrykk med trykksverte, skyggemasser, kontrollerte paletter, perspektiv, fortellende skala og bevisst ubrukt papir. Den gamle geometriske seksstils-motoren er fortsatt med for DNA-kompatibilitet, men brukes ikke ved ny generering.
+**FORTELLING** er en generativ *konseptgrammatikk*, ikke fire ferdiglagde bilder eller et bibliotek fra utviklerens tidligere samtaler. Motoren velger blant **åtte hverdagsobjekter**, **syv fysiske paradokser** og **tre romlige oppsett**. En stol kan ha en skygge som har valgt en annen retning; en bok kan ha mistet en bit av seg selv; et objekt kan miste sin tyngde eller vise spor av tidligere posisjoner. Konseptet endrer de tegnede figurene, ikke bare tittelen. Enkelte kombinasjoner sperres når de ikke gir fysisk mening, eksempelvis at en stige «søler innhold».
 
-**Ærlig avgrensning:** dette er fortsatt *regelbasert* generativ kunst. Pikselkritikken ser på bildet som tall og kan ikke skjønne hva et fyrtårn betyr, eller hvorfor et verk er rørende. En trent bildekunstmodell krever en annen arkitektur. Målet for denne versjonen er reelle motiver og en etterprøvbar visuell feedback-loop, ikke å selge «42 tilfeldig valgte parametere» som intelligens.
+Ingen av motivene velges på grunnlag av brukerhistorikk eller personlige referanser. Variasjonene er reproduserbare fra DNA og får egne fysiske materialer, fargeflater, skygger og ufullkommen trykktekstur. De gamle seks geometriske stilene er fortsatt lesbare fra eldre DNA, men brukes ikke ved ny generering.
+
+**Ærlig avgrensning:** dette er fremdeles en begrenset *regelbasert* oppfinner med bildepikselanalyse. Det er ikke en trent, åpent assosierende bildemodell, og pixel-statistikk alene kan ikke måle kunstnerisk kvalitet. Hvis målet er et virkelig overraskende kunstnersubjekt, må videre versjoner øke handlingsrom, kritikk og læring utover disse faste byggesteinene.
 
 ## Atelier 002 · Dagens verk, kritikk og avstamning
 
 - **Dagens original:** velg `DNA / ? → Dagens verk`. Alle enheter får samme verk på samme UTC-dato, helt uten nettverk. Dagens original er uavhengig av lokale smaksdata.
-- **Kunstnerens egenkritikk:** åpne `DNA / ? → Kunstnerens egenkritikk` for å se hver dimensjon og vekting. Lagret utvelgelsesscore bevares; ny vurdering bruker gjeldende historikk og smak. Kunstneren scorer DNA-parametre, ikke bildepiksler.
+- **Kunstnerens egenkritikk:** åpne `DNA / ? → Kunstnerens egenkritikk` for å se både faktisk bildeanalyse (nytt i 0.3) og den eldre DNA-heuristikken. Lagret utvelgelsesscore bevares. Målingene er strukturelle, ikke semantiske.
 - **Spor opphavet:** `EVOLVER` skriver forelderseed inn i DNA v2. `Finn forelderverket` kan gå bakover gjennom opptil 300 lokale verk. Originalt DNA v1 forblir lesbart.
 - **Utstillingsmodus:** trykk på selve kunstverket for å gjemme grensesnittet. Trykk igjen for å hente det tilbake.
 - **Smak uten juks:** ett verk kan maksimalt gi én lokal stemme. Ingen konto, ingen profil utenfor enheten.
