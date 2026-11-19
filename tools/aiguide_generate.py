@@ -11,65 +11,140 @@ import sys
 
 
 def validate(data):
-    if not isinstance(data, dict):
-        raise ValueError("Scene must be a JSON object")
-    if data.get("version") != 1:
-        raise ValueError("Only version 1 supported")
-    if not (1 <= len(data.get("title", "")) <= 76):
-        raise ValueError("Invalid scene title")
-    if not (1 <= len(data.get("intent", "")) <= 240):
-        raise ValueError("Invalid scene intention")
+    """Normalize to exactly the native Android scene contract, no executable content."""
+    import math
     import re
-    colour = re.compile(r"^#[0-9a-fA-F]{6}$")
-    if not colour.fullmatch(data.get("background", "")):
-        raise ValueError("Invalid background colour")
-    elements = data.get("elements", [])
-    if not isinstance(elements, list) or not 8 <= len(elements) <= 90:
+
+    def number(value, low=-.25, high=1.25):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError("Coordinate is not a finite number")
+        value = float(value)
+        if not math.isfinite(value) or not low <= value <= high:
+            raise ValueError("Coordinate outside allowed canvas")
+        return value
+
+    def hex_color(value):
+        if not isinstance(value, str) or re.fullmatch(r"#[0-9a-fA-F]{6}", value) is None:
+            raise ValueError("Invalid #RRGGBB color")
+        return value.upper()
+
+    def point(source, keys):
+        return {key: number(source[key]) for key in keys}
+
+    def size(source, keys):
+        return {key: number(source[key], 1e-12, 1.5) for key in keys}
+
+    def stroke(source):
+        return {"width": number(source.get("width", .009), .001, .09)}
+
+    if not isinstance(data, dict) or type(data.get("version")) is not int or data["version"] != 1:
+        raise ValueError("Only scene version 1 supported")
+    title = data.get("title")
+    intent = data.get("intent")
+    if not isinstance(title, str) or not 1 <= len(title.strip()) <= 76:
+        raise ValueError("Invalid title")
+    if not isinstance(intent, str) or not 1 <= len(intent.strip()) <= 240:
+        raise ValueError("Invalid intent")
+    source = data.get("elements")
+    if not isinstance(source, list) or not 8 <= len(source) <= 90:
         raise ValueError("8..90 elements required")
-    for el in elements:
-        if not isinstance(el, dict) or el.get("kind") not in {
-            "rect", "ellipse", "line", "curve", "poly"
-        }:
-            raise ValueError("Unsupported element")
-        if not colour.fullmatch(el.get("color", "")):
-            raise ValueError("Invalid element colour")
-        kind = el["kind"]
-        props = {
-            "rect": ("x", "y", "w", "h"),
-            "ellipse": ("x", "y", "w", "h"),
-            "line": ("x", "y", "x2", "y2"),
-            "curve": ("x", "y", "cx1", "cy1", "cx2", "cy2", "x2", "y2"),
-            "poly": ()
-        }[kind]
-        alpha = el.get("alpha", 1)
-        if not isinstance(alpha, (int, float)) or not 0.04 <= alpha <= 1:
-            raise ValueError("Invalid alpha")
-        for prop in props:
-            n = el[prop]
-            if not isinstance(n, (int, float)):
-                raise ValueError(f"Invalid number: {prop}")
-            if prop in {"w", "h"}:
-                if not 0 < n <= 1.5:
-                    raise ValueError(f"Invalid extent: {prop}")
-            elif not -0.25 <= n <= 1.25:
-                raise ValueError(f"Invalid coordinate: {prop}")
-        if kind in {"line", "curve"}:
-            width = el.get("width", .009)
-            if not isinstance(width, (int, float)) or not .001 <= width <= .09:
-                raise ValueError("Invalid stroke width")
-        if kind == "poly":
-            p = el["points"]
-            if not isinstance(p, list) or not 3 <= len(p) <= 18:
+    result = {
+        "version": 1,
+        "title": " ".join(title.split()),
+        "intent": " ".join(intent.split()),
+        "background": hex_color(data.get("background")),
+        "elements": [],
+    }
+    for el in source:
+        if not isinstance(el, dict):
+            raise ValueError("Invalid drawing element")
+        kind = el.get("kind")
+        if kind not in {"rect", "ellipse", "line", "curve", "poly", "path"}:
+            raise ValueError("Unsupported drawing command")
+        item = {
+            "kind": kind,
+            "color": hex_color(el.get("color")),
+            "alpha": number(el.get("alpha", 1), .04, 1),
+        }
+        if "gradient" in el:
+            g = el["gradient"]
+            if not isinstance(g, dict) or g.get("type") not in {"linear", "radial"}:
+                raise ValueError("Invalid gradient")
+            safe_g = {
+                "type": g["type"],
+                "start": hex_color(g.get("start")),
+                "end": hex_color(g.get("end")),
+            }
+            if g["type"] == "linear":
+                safe_g.update(point(g, ("x1", "y1", "x2", "y2")))
+                if (safe_g["x1"] - safe_g["x2"]) ** 2 + (
+                    safe_g["y1"] - safe_g["y2"]
+                ) ** 2 < .0001:
+                    raise ValueError("Degenerate gradient")
+            else:
+                safe_g.update(point(g, ("cx", "cy")))
+                safe_g.update(size(g, ("r",)))
+            item["gradient"] = safe_g
+        if kind in {"rect", "ellipse"}:
+            item.update(point(el, ("x", "y")))
+            item.update(size(el, ("w", "h")))
+        elif kind in {"line", "curve"}:
+            coords = ("x", "y", "x2", "y2")
+            if kind == "curve":
+                coords += ("cx1", "cy1", "cx2", "cy2")
+            item.update(point(el, coords))
+            item.update(stroke(el))
+        elif kind == "poly":
+            pts = el.get("points")
+            if not isinstance(pts, list) or not 3 <= len(pts) <= 18:
                 raise ValueError("Invalid polygon")
-            if any(not isinstance(pair, list) or len(pair) != 2
-                   or any(not isinstance(n, (int, float))
-                          or not -0.25 <= n <= 1.25 for n in pair)
-                   for pair in p):
+            item["points"] = [
+                [number(pair[0]), number(pair[1])]
+                for pair in pts
+                if isinstance(pair, list) and len(pair) == 2
+            ]
+            if len(item["points"]) != len(pts):
                 raise ValueError("Invalid polygon point")
-    result = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
-    if len(result) > 18000:
+        else:
+            mode = el.get("mode", "fill")
+            if mode not in {"fill", "stroke"}:
+                raise ValueError("Invalid path mode")
+            item["mode"] = mode
+            if mode == "stroke":
+                item.update(stroke(el))
+            commands = el.get("commands")
+            if not isinstance(commands, list) or not 3 <= len(commands) <= 64:
+                raise ValueError("Invalid path command count")
+            fixed = []
+            draw_count = 0
+            for index, cmd in enumerate(commands):
+                if not isinstance(cmd, dict):
+                    raise ValueError("Invalid path instruction")
+                op = cmd.get("op")
+                if index == 0 and op != "M" or index > 0 and op == "M":
+                    raise ValueError("Exactly one initial M is allowed")
+                if op in {"M", "L"}:
+                    fixed.append({"op": op, **point(cmd, ("x", "y"))})
+                elif op == "Q":
+                    fixed.append({"op": op, **point(cmd, ("cx", "cy", "x", "y"))})
+                elif op == "C":
+                    fixed.append({"op": op, **point(cmd,
+                        ("cx1", "cy1", "cx2", "cy2", "x", "y"))})
+                elif op == "Z" and index == len(commands) - 1:
+                    fixed.append({"op": op})
+                else:
+                    raise ValueError("Unsupported path instruction")
+                if op in {"L", "Q", "C"}:
+                    draw_count += 1
+            if draw_count < 2 or mode == "fill" and commands[-1]["op"] != "Z":
+                raise ValueError("Invalid path closure")
+            item["commands"] = fixed
+        result["elements"].append(item)
+
+    text = json.dumps(result, ensure_ascii=False, separators=(",", ":"))
+    if len(text) > 18000:
         raise ValueError("Scene exceeds Android storage bounds")
-    return result
+    return text
 
 
 def generate(prompt, model):
