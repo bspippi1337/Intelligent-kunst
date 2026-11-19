@@ -27,6 +27,14 @@ Hvert trykk på **SKAP NYTT** starter en liten kunstnerisk utvelgelse:
 
 Dette er et **eksperiment i algoritmisk kreativitet**, ikke et forsøk på å selge heuristikker som en trent språkmodell eller som en objektiv estetisk dom. Scoren er en intern utvelgelsesfunksjon og ikke en vurdering av kunstnerisk verdi.
 
+## Atelier 002 · Dagens verk, kritikk og avstamning
+
+- **Dagens original:** velg `DNA / ? → Dagens verk`. Alle enheter får samme verk på samme UTC-dato, helt uten nettverk. Dagens original er uavhengig av lokale smaksdata.
+- **Kunstnerens egenkritikk:** åpne `DNA / ? → Kunstnerens egenkritikk` for å se hver dimensjon og vekting. Lagret utvelgelsesscore bevares; ny vurdering bruker gjeldende historikk og smak. Kunstneren scorer DNA-parametre, ikke bildepiksler.
+- **Spor opphavet:** `EVOLVER` skriver forelderseed inn i DNA v2. `Finn forelderverket` kan gå bakover gjennom opptil 300 lokale verk. Originalt DNA v1 forblir lesbart.
+- **Utstillingsmodus:** trykk på selve kunstverket for å gjemme grensesnittet. Trykk igjen for å hente det tilbake.
+- **Smak uten juks:** ett verk kan maksimalt gi én lokal stemme. Ingen konto, ingen profil utenfor enheten.
+
 ## Seks uttrykk
 
 | Stil | Visuell idé |
@@ -63,7 +71,9 @@ Ren JVM-røykprøve av den kunstneriske beslutningsmotoren (ingen Android SDK n�
 app/src/main/java/no/blckswan/intelligentkunst/
 ├── core/
 │   ├── Artwork.java        # uforanderlig, versjonert genom og paletter
-│   ├── ArtDirector.java    # kandidater, heuristisk selvkritikk, evolusjon og smak
+│   ├── ArtDirector.java    # kandidater, evolusjon og smak
+│   ├── CritiqueReport.java # åpen og kontrollerbar utvelgelsesrubrikk
+│   ├── DailyEdition.java   # felles UTC-dagsverk uten nett
 │   └── FieldNoise.java     # deterministisk, glatt prosedyrestøy
 ├── render/
 │   └── RenderEngine.java   # seks native Android Canvas-malere
@@ -80,7 +90,7 @@ app/src/main/java/no/blckswan/intelligentkunst/
 
 ## Videre forskningsspørsmål
 
-Kan en kunstnerisk agent oppdage *nye* estetiske preferanser uten å bli en echo chamber? Hva skjer når utvelgelse får se på selve pikslene, ikke bare genomet? Kan man bygge en utstillingshistorikk der hvert verk kjenner sin avstamning? Disse spørsmålene er åpne og gir en retning for videre eksperimenter, ikke funksjoner som feilaktig påstås ferdige.
+Kan en kunstnerisk agent oppdage *nye* estetiske preferanser uten å bli en echo chamber? Hva skjer når utvelgelse får se på selve pikslene, ikke bare genomet? Kan man bygge en enda lengre utstillingshistorikk der hvert verk kjenner sin avstamning? Disse spørsmålene er åpne og gir en retning for videre eksperimenter, ikke funksjoner som feilaktig påstås ferdige.
 
 ## Lisens
 
