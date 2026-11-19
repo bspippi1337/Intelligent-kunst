@@ -35,6 +35,10 @@ Ingen av motivene velges på grunnlag av brukerhistorikk eller personlige refera
 
 **Ærlig avgrensning:** dette er fremdeles en begrenset *regelbasert* oppfinner med bildepikselanalyse. Det er ikke en trent, åpent assosierende bildemodell, og pixel-statistikk alene kan ikke måle kunstnerisk kvalitet. Hvis målet er et virkelig overraskende kunstnersubjekt, må videre versjoner øke handlingsrom, kritikk og læring utover disse faste byggesteinene.
 
+## Atelier 008.1 · Testene skal avsløre feil, ikke dekke dem til
+
+Ved den første ekte emulatorvisningen av olje- og kullmotorene oppdaget vi at et tomt testparameter utilsiktet valgte olje også ved aktstudium. Dette er rettet. CI sjekker nå at aktstudium, olje og kull faktisk gir **ulike bilder**, og at Android-prosessen overlever renderingen. Versjon 0.8.1 er en korrigert LAB-testversjon.
+
 ## Atelier 008 · Referansebasert, anatomisk og strukturbevisst kunst
 
 **Olje** gjør mer enn å legge tilfeldige penselstrøk over et foto. En lokal Sobel-analyse finner faktiske lyskonturer; på tre strøkstørrelser blir maling lagt langs formene med farger hentet fra kildebildet. **Kull** bruker lys- og skyggefeltene til å bygge opp konturer og krysskravering. Behandlingen foregår helt offline, uten bildegenerering fra en server.
