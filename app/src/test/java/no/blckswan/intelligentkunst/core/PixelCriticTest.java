@@ -39,6 +39,22 @@ public final class PixelCriticTest {
             assertFalse(art.intention().isEmpty());
             assertEquals(art.encode(),Artwork.decode(art.encode()).encode());
         }
-        assertEquals(0,StoryPlan.scene(4L));
+        java.util.Set<String> combinations=new java.util.HashSet<>();
+        java.util.Set<String> concepts=new java.util.HashSet<>();
+        for(long seed=0;seed<3000;seed++) {
+            StoryPlan.Idea idea=StoryPlan.generate(seed);
+            combinations.add(idea.signature());
+            concepts.add(idea.proposition.name());
+            assertEquals(idea.signature(),StoryPlan.generate(seed).signature());
+            assertFalse(idea.premise().isEmpty());
+            assertFalse(idea.title().isEmpty());
+            if (idea.proposition==StoryPlan.Proposition.OVERFLOW)
+                assertTrue(idea.object==StoryPlan.ObjectKind.CUP
+                    || idea.object==StoryPlan.ObjectKind.TEAPOT
+                    || idea.object==StoryPlan.ObjectKind.SUITCASE
+                    || idea.object==StoryPlan.ObjectKind.BOOK);
+        }
+        assertTrue("not just four repeating images",combinations.size()>90);
+        assertEquals(7,concepts.size());
     }
 }
