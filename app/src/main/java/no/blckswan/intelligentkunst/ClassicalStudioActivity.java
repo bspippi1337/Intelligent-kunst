@@ -3,6 +3,13 @@ package no.blckswan.intelligentkunst;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ContentValues;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
+import android.content.ActivityNotFoundException;
+import android.app.ActivityManager;
+import android.widget.EditText;
+import android.text.InputType;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -47,7 +54,7 @@ public final class ClassicalStudioActivity extends Activity {
     private final AtomicInteger revision=new AtomicInteger();
     private final SecureRandom random=new SecureRandom();
     private StudioView stage;
-    private TextView message,subjectLabel,sourceButton,figureButton,poseButton,saveButton;
+    private TextView message,subjectLabel,sourceButton,figureButton,poseButton,saveButton,neuralButton;
     private TextView[] modes=new TextView[4];
     private Bitmap preview;
     private Uri imageUri;
@@ -128,6 +135,12 @@ public final class ClassicalStudioActivity extends Activity {
             showSelection();
         });
 
+        neuralButton=button("✦  LOKAL AI · GENERER MED EGEN MODELL",false);
+        LinearLayout.LayoutParams np=new LinearLayout.LayoutParams(-1,dp(46));
+        np.topMargin=dp(9);
+        root.addView(neuralButton,np);
+        neuralButton.setOnClickListener(v->openLocalNeuralDialog());
+
         saveButton=button("↓  EKSPORTER KUNSTVERK SOM PNG",true);
         LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,dp(50));
         sp.topMargin=dp(9);
@@ -167,6 +180,84 @@ public final class ClassicalStudioActivity extends Activity {
             }
         }
         showSelection();
+        if(getIntent().getBooleanExtra("ik_neural_fixture",false)) {
+            root.post(this::openLocalNeuralDialog);
+        }
+    }
+
+    /**
+     * Explicitly delegates to a separate, locally-running neural inference app.
+     * This APK itself contains no model weights and does no inference. The
+     * external app is responsible for model licensing, installation, inference
+     * and any permission requests; users reimport a result through ACTION_OPEN_DOCUMENT.
+     */
+    private void openLocalNeuralDialog(){
+        EditText prompt=new EditText(this);
+        prompt.setTextSize(13);
+        prompt.setMinLines(3);
+        prompt.setMaxLines(6);
+        prompt.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+        prompt.setText("Photorealistic fine art portrait, adult life model, "
+            +"natural human anatomy, soft atelier window light, "
+            +"35mm lens, lifelike skin texture, classical composition");
+        LinearLayout wrap=new LinearLayout(this);
+        wrap.setOrientation(LinearLayout.VERTICAL);
+        wrap.setPadding(dp(18),0,dp(18),0);
+        wrap.addView(prompt);
+        ActivityManager am=(ActivityManager)getSystemService(Context.ACTIVITY_SERVICE);
+        ActivityManager.MemoryInfo memory=new ActivityManager.MemoryInfo();
+        am.getMemoryInfo(memory);
+        long ramGiB=Math.round(memory.totalMem/1073741824.0);
+        String memoryNote="En SD1.5-modell ved 512×512 bruker omtrent 1,9 GB "
+            +"RAM under inferens med Q4 og optimalisering, pluss Android og "
+            +"andre apper. Telefonen rapporterer ca. "+ramGiB+" GiB total RAM. "
+            +"Start gjerne ved 256×256 eller 384×384.";
+        new AlertDialog.Builder(this)
+            .setTitle("NEVRAL KUNST · LOKAL DIFFUSJON")
+            .setMessage("Dette åpner den SEPARATE Android-appen Local Diffusion, "
+                +"som kjører ekte stable-diffusion.cpp-modeller på enheten. "
+                +"Den krever installerte modellvekter og kan bruke mye RAM og tid. "
+                +"Vår app sender ingen data til nett og kjører ingen egen diffusjonsmodell.\n\n"
+                +memoryNote+"\n\nDen eksterne appen ber om bred tilgang til lagring. "
+                +"Vurder det før du installerer. Når bildet er generert og lagret, "
+                +"kom tilbake og trykk ÅPNE FOTO.")
+            .setView(wrap)
+            .setNegativeButton("Avbryt",null)
+            .setNeutralButton("HENT LOKAL DIFFUSJON",(dialog,which)->{
+                openLocalDiffusionReleases();
+            })
+            .setPositiveButton("ÅPNE LOKAL AI",(dialog,which)->{
+                ClipboardManager cb=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+                cb.setPrimaryClip(ClipData.newPlainText("Lokal kunstprompt",
+                    prompt.getText().toString().trim()));
+                Intent local=new Intent(Intent.ACTION_MAIN);
+                local.addCategory(Intent.CATEGORY_LAUNCHER);
+                local.setClassName("com.example.local_diffusion",
+                    "com.example.local_diffusion.MainActivity");
+                try{
+                    startActivity(local);
+                    message.setText("PROMPT KOPIERT · LIM INN I LOKAL DIFFUSJON · RETURNER MED ÅPNE FOTO");
+                }catch(ActivityNotFoundException error){
+                    new AlertDialog.Builder(this)
+                        .setTitle("Lokal modellapp er ikke installert")
+                        .setMessage("Prompten er kopiert. Installer Local Diffusion "
+                            +"fra det offisielle prosjektet, last inn en modell "
+                            +"som passer RAM-en på enheten, og prøv igjen. "
+                            +"Ingen API-nøkkel er nødvendig.")
+                        .setNegativeButton("Tilbake",null)
+                        .setPositiveButton("GitHub-utgivelser",(d,w)->openLocalDiffusionReleases())
+                        .show();
+                }
+            }).show();
+    }
+
+    private void openLocalDiffusionReleases(){
+        Intent link=new Intent(Intent.ACTION_VIEW,
+            Uri.parse("https://github.com/rmatif/Local-Diffusion/releases/latest"));
+        try{startActivity(link);}
+        catch(ActivityNotFoundException error){
+            message.setText("ÅPNE GITHUB.COM/RMATIF/LOCAL-DIFFUSION/RELEASES I NETTLESER");
+        }
     }
 
     private int dp(float v){return (int)(getResources().getDisplayMetrics().density*v+.5f);}
