@@ -107,7 +107,7 @@ public final class PhotoPainter {
         int[][] passes={{36,48},{62,92},{105,125}};
         for(int pass=0;pass<passes.length;pass++){
             int columns=passes[pass][0];
-            int rows=Math.max(2,Math.round(columns*dest.height()/Math.max(1f,dest.width())));
+            int rows=Math.max(2,Math.min(240,Math.round(columns*dest.height()/Math.max(1f,dest.width()))));
             float dx=dest.width()/columns,dy=dest.height()/rows;
             float thick=Math.max(.7f,Math.min(dx,dy)*(pass==0?.55f:pass==1?.38f:.26f));
             brush.setStrokeWidth(thick);
@@ -164,7 +164,7 @@ public final class PhotoPainter {
         canvas.save();
         canvas.clipRect(dest);
         final int cols=150;
-        final int rows=Math.max(2,Math.round(cols*dest.height()/Math.max(1f,dest.width())));
+        final int rows=Math.max(2,Math.min(240,Math.round(cols*dest.height()/Math.max(1f,dest.width()))));
         float dx=dest.width()/cols,dy=dest.height()/rows;
         for(int y=1;y<rows-1;y++){
             for(int x=1;x<cols-1;x++){
