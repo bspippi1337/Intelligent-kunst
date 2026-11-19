@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.1 · Visual fixture independence · 2026-11-19
+
+- The first emulator preview found the oil paint fixture accidentally occupying the classical life-model screenshot due to a null-valued debug intent extra.
+- Fix the null-extra handoff so classical anatomy, oil and charcoal each show the intended source.
+- Add CI assertions that classical/painting and oil/charcoal screenshots differ, and that the app process is alive after rendering.
+- Handle a separate model app's access-restricted/non-exported activity gracefully instead of crashing.
+- All 0.8.0 rendering improvements and the keyless security guarantee remain intact.
+
 ## 0.8.0 · Actual brushwork from photographic contours · 2026-11-19
 
 - **Oil:** replace arbitrary horizontal strokes with three deterministic scales of image-colour brushwork following actual Sobel luminance contours. Preserve the underlying real image to prevent invented details.
