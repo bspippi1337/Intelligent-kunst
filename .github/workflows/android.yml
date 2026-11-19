@@ -35,6 +35,8 @@ jobs:
           gradle-version: '8.9'
       - name: Test core without Android
         run: sh ./tools/test-core.sh
+      - name: Test original aiguide Python bridge contract
+        run: python3 -m unittest discover -s tools -p 'test_aiguide_bridge.py' -v
       - name: Build and test debug APK
         run: gradle --no-daemon :app:assembleDebug :app:testDebugUnitTest
       - name: Upload installable test APK
