@@ -355,7 +355,8 @@ public final class MainActivity extends Activity {
                 + "ATELIER 003 skisserer 12 faktiske motiver, hver med 42 interne DNA-forslag. "
                 + "Bildene males i miniatyr, undersøkes og sammenliknes. Kontrast, fokus, "
                 + "negative rom, markeringer og visuell ulikhet påvirker hvilket bilde som velges.\n\n"
-                + "Motivene har en intensjon: fyrtårn, dør, tre eller hval. "\n                + "Et verk utvikler seg gjennom EVOLVER og kan arve motivet fra tidligere kunst.\n\n"
+                + "Motivene har en intensjon: fyrtårn, dør, tre eller hval. "
+                + "Et verk utvikler seg gjennom EVOLVER og kan arve motivet fra tidligere kunst.\n\n"
                 + "Dette er håndprogrammert generativ kunst med bildepikselanalyse, "
                 + "ikke en trent generativ bildemodell. Ingen nettverkstillatelser.")
             .setPositiveButton("Tilbake til atelieret",null).show();
