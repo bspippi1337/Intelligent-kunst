@@ -7,6 +7,8 @@
 - New `PixelCritic` measures tonal range, image-space focus, quiet space, mark density, composition placement and 64-bit visual hash similarity against recent work.
 - Open `Kunstnerens egenkritikk` to inspect the actual rendered bitmap's measurable image features and compare them to the old genome-only heuristic.
 - Compose titles and visual premises from independently mixed seed values, without using user history or earlier projects. Render recognizable object forms with high-contrast ink, spatial tension, varied palettes and deliberate negative space.
+- Learn positive AND negative feedback separately for objects, visual propositions and palette. Hold LÆR to reject a work, once per artwork, while maintaining novelty in the next proposals.
+- Visual smoke CI opens the Android application in an emulator and captures six real generated works for inspection.
 - Preserve deterministic DNA, offline rendering, gallery, PNG exports and backwards compatibility with earlier versions.
 - New pixel fixture tests and deterministic story-generation checks.
 
