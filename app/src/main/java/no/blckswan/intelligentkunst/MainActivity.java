@@ -89,9 +89,12 @@ public final class MainActivity extends Activity {
         }
         if((getApplicationInfo().flags &
             android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE)!=0
-            && getIntent().getBooleanExtra("ik_classical_fixture",false)){
+            && (getIntent().getBooleanExtra("ik_classical_fixture",false)
+                || getIntent().getBooleanExtra("ik_neural_fixture",false))){
             startActivity(new Intent(this,ClassicalStudioActivity.class)
-                .putExtra("ik_classical_fixture",true));
+                .putExtra("ik_classical_fixture",true)
+                .putExtra("ik_neural_fixture",
+                    getIntent().getBooleanExtra("ik_neural_fixture",false)));
             return;
         }
         Artwork last=archive.current();
