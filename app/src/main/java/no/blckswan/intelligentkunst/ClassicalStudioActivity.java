@@ -16,6 +16,8 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Build;
+import android.view.WindowInsets;
 import android.provider.MediaStore;
 import android.view.Gravity;
 import android.view.View;
@@ -136,7 +138,25 @@ public final class ClassicalStudioActivity extends Activity {
         notice.setGravity(Gravity.CENTER);
         notice.setPadding(dp(5),dp(10),dp(5),0);
         root.addView(notice);
+        // Android 15+ draws behind system bars by default. Keep all controls
+        // and the bottom privacy explanation safely within the visible area.
+        root.setOnApplyWindowInsetsListener((view,insets)->{
+            int left=0,top=0,right=0,bottom=0;
+            if(Build.VERSION.SDK_INT>=30){
+                android.graphics.Insets system=insets.getInsets(WindowInsets.Type.systemBars());
+                left=system.left;top=system.top;
+                right=system.right;bottom=system.bottom;
+            }else{
+                left=insets.getSystemWindowInsetLeft();
+                top=insets.getSystemWindowInsetTop();
+                right=insets.getSystemWindowInsetRight();
+                bottom=insets.getSystemWindowInsetBottom();
+            }
+            root.setPadding(dp(16)+left,dp(18)+top,dp(16)+right,dp(14)+bottom);
+            return insets;
+        });
         setContentView(root);
+        root.requestApplyInsets();
         if(getIntent().getBooleanExtra("ik_classical_fixture",false)){
             figureSeed=249833L;figure=true;
         }else{
