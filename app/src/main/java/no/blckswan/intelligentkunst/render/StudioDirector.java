@@ -8,6 +8,7 @@ import java.util.SplittableRandom;
 
 import no.blckswan.intelligentkunst.core.ArtDirector;
 import no.blckswan.intelligentkunst.core.Artwork;
+import no.blckswan.intelligentkunst.core.ConceptDiversity;
 import no.blckswan.intelligentkunst.core.PixelCritic;
 
 /**
@@ -17,6 +18,7 @@ import no.blckswan.intelligentkunst.core.PixelCritic;
  */
 public final class StudioDirector {
     public static final int PROPOSALS=12;
+    private static final int MAX_ATTEMPTS=72;
     private static final int PREVIEW_W=192, PREVIEW_H=320;
     private final ArtDirector director=new ArtDirector();
 
@@ -48,10 +50,15 @@ public final class StudioDirector {
         Artwork best=null;
         PixelCritic.Analysis report=null;
         double bestScore=-1;
-        for(int i=0;i<PROPOSALS;i++){
+        int accepted=0;
+        // Visual scores alone caused three identical subjects to win in a row.
+        // Filter at the concept level BEFORE spending time rendering candidates.
+        for(int attempt=0;attempt<MAX_ATTEMPTS && accepted<PROPOSALS;attempt++){
             Artwork draft=parent==null
                 ? director.create(random.nextLong(),recent,taste)
                 : director.evolve(parent,random.nextLong(),recent,taste);
+            if(parent==null && !ConceptDiversity.isFresh(draft,recent))continue;
+            accepted++;
             PixelCritic.Analysis visual=inspect(draft);
             double novelty=.5;
             if(!previous.isEmpty()){
@@ -67,8 +74,16 @@ public final class StudioDirector {
                 bestScore=result; best=draft;report=visual;
             }
         }
-        if(best==null)throw new IllegalStateException("No candidate produced");
-        return new Selection(rescore(best,bestScore),report,PROPOSALS);
+        if(best==null) {
+            // A bound protects underpowered handsets. Relax only as a last
+            // resort; never block the user indefinitely on a creative veto.
+            Artwork fallback=parent==null
+                ? director.create(random.nextLong(),recent,taste)
+                : director.evolve(parent,random.nextLong(),recent,taste);
+            PixelCritic.Analysis image=inspect(fallback);
+            return new Selection(rescore(fallback,image.score),image,1);
+        }
+        return new Selection(rescore(best,bestScore),report,accepted);
     }
 
     public static PixelCritic.Analysis inspect(Artwork piece){
