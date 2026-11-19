@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.1 · Conceptual continuity · 2026-11-19
+
+- EVOLVER now preserves the parent's visual subject, rather than randomly picking a new object while only inheriting cosmetic DNA.
+- Most evolutions keep the same physical proposition while exploring viewpoint, palette and composition. Some change the proposition but preserve the object.
+- Added tests covering 180 parent/offspring pairs and deterministic selection of inherited concepts.
+- The original aiguide-dev Python library is updated and its API compatibility correction landed in main. Android/Termux documentation now points at the verified commit.
+- Genuine emulator smoke captures six distinct offline illustrations and the keyless, expressive vector-rendering fixture.
+
+**Note:** Automated image quality metrics do not prove artistic intelligence. The offline grammar remains a deliberately constrained experiment.
+
+
 ## 0.5.0 · Expressive Canvas · 2026-11-19
 
 - Expand AI scene grammar beyond rectangles, ellipses and polygons to filled/stroked Bezier paths with M/L/Q/C/Z instructions.
