@@ -57,4 +57,15 @@ adb exec-out screencap -p > visual/study-local-neural-landscape.png
 test -s visual/study-local-neural-landscape.png
 adb shell settings put system user_rotation 0
 adb shell settings put system accelerometer_rotation 1
+
+# A deterministic, clearly labelled synthetic still-life allows verifying
+# the actual oil/charcoal edge engines, NOT claiming a real photographic sample.
+for mode in oil charcoal; do
+    adb shell am force-stop no.blckswan.intelligentkunst.lab
+    adb shell am start -n no.blckswan.intelligentkunst.lab/no.blckswan.intelligentkunst.MainActivity \
+        --es ik_photo_fixture "$mode"
+    sleep 15
+    adb exec-out screencap -p > "visual/study-photo-$mode.png"
+    test -s "visual/study-photo-$mode.png"
+done
 sha256sum visual/*.png
