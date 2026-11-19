@@ -41,7 +41,7 @@ public class CoreSmoke {
             check(story.style == Artwork.Style.FABLE, "new art tells stories");
             check(!story.intention().isEmpty(), "story has intentional subject");
         }
-        String scene = "{\\\"version\\\":1,\\\"title\\\":\\\"Unexpected form\\\",\\\"elements\\\":[]}";
+        String scene = "{\"version\":1,\"title\":\"Unexpected form\",\"elements\":[]}";
         Artwork modelWork = new Artwork(10022L, Artwork.Style.AIGUIDE, 0,
             .5,.5,.5,.5,.9,0,scene);
         check(modelWork.encode().startsWith("3:"), "AI artwork uses DNA v3");
