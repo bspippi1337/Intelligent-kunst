@@ -260,6 +260,113 @@ public final class MainActivity extends Activity {
             }
         });
     }
+    /** Optional: API access is explicit; no credentials are saved on the phone. */
+    private void openAiAtelier(String revisionHint){
+        if(composing){shortToast("Kunstneren arbeider allerede.");return;}
+        LinearLayout form=new LinearLayout(this);
+        form.setOrientation(LinearLayout.VERTICAL);
+        form.setPadding(dp(20),dp(8),dp(20),dp(4));
+        EditText idea=new EditText(this);
+        idea.setTextSize(14);
+        idea.setMinLines(2);idea.setMaxLines(4);
+        idea.setHint("Gi et tema, eller la modellen finne på noe nytt");
+        if(revisionHint!=null)idea.setText("Lag en radikalt annerledes visuell tolkning av: "
+            +revisionHint);
+        form.addView(idea,new LinearLayout.LayoutParams(-1,-2));
+        EditText key=new EditText(this);
+        key.setTextSize(13);
+        key.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        key.setHint("OpenAI API-nøkkel (bare denne økten)");
+        form.addView(key,new LinearLayout.LayoutParams(-1,-2));
+        EditText model=new EditText(this);
+        model.setTextSize(13);
+        model.setSingleLine(true);
+        model.setText("gpt-6.1-terra");
+        model.setHint("Modell-ID");
+        form.addView(model,new LinearLayout.LayoutParams(-1,-2));
+        new AlertDialog.Builder(this)
+            .setTitle("AI ATELIER · aiguide")
+            .setMessage("Valgfri nettmodus. Din tekst sendes til modellleverandøren over HTTPS. "
+                +"Nøkkelen lagres aldri; bare forespørsel og ferdig bildemanus logges "
+                +"privat på telefonen. API-bruk kan koste penger.")
+            .setView(form)
+            .setNegativeButton("Avbryt",null)
+            .setPositiveButton("Komponer",(d,w)->{
+                String prompt=idea.getText().toString().trim();
+                String apiKey=key.getText().toString().trim();
+                String modelId=model.getText().toString().trim();
+                key.getText().clear();
+                generateAi(prompt,apiKey,modelId);
+            }).show();
+    }
+
+    private void generateAi(String prompt,String apiKey,String modelId){
+        if(composing)return;
+        if(apiKey.isEmpty()) {shortToast("API-nøkkel er påkrevd i nettmodus.");return;}
+        composing=true;
+        createButton.setEnabled(false);evolveButton.setEnabled(false);aiButton.setEnabled(false);
+        aiButton.setText("…  AI");
+        status.setText("AIGUIDE FORFATTER ET ORIGINALT BILDEMANUS…");
+        final int request=compositionToken.incrementAndGet();
+        final long seed=freshSeed();
+        composer.execute(()->{
+            try{
+                String scene=new AiguideClient(getApplicationContext()).ask(prompt,apiKey,modelId);
+                Artwork draft=new Artwork(seed,Artwork.Style.AIGUIDE,0,.5,.5,.5,.5,0,0,scene);
+                PixelCritic.Analysis image=StudioDirector.inspect(draft);
+                Artwork completed=new Artwork(seed,Artwork.Style.AIGUIDE,0,.5,.5,.5,.5,
+                    image.score,0,scene);
+                runOnUiThread(()->{
+                    if(isFinishing()||isDestroyed()||request!=compositionToken.get())return;
+                    composing=false;
+                    createButton.setEnabled(true);evolveButton.setEnabled(true);aiButton.setEnabled(true);
+                    aiButton.setText("✦  AI");
+                    show(completed,true);
+                    status.setText("AI-MANUS TEGNET I APPEN  ·  BILDEANALYSE "
+                        + Math.round(image.score*100) + "/100");
+                });
+            }catch(Exception|OutOfMemoryError ex){
+                final String reason=ex.getMessage()==null?ex.getClass().getSimpleName():ex.getMessage();
+                runOnUiThread(()->{
+                    if(isFinishing()||isDestroyed()||request!=compositionToken.get())return;
+                    composing=false;
+                    createButton.setEnabled(true);evolveButton.setEnabled(true);aiButton.setEnabled(true);
+                    aiButton.setText("✦  AI");
+                    status.setText("AI-ATELIER STOPPET · OFFLINE-MODUS FUNGERER FORTSATT");
+                    new AlertDialog.Builder(this).setTitle("AI-bilde ble ikke ferdig")
+                        .setMessage(reason.length()>350?reason.substring(0,350):reason)
+                        .setPositiveButton("OK",null).show();
+                });
+            }
+        });
+    }
+
+    private String displayTitle(Artwork piece){
+        return piece.style==Artwork.Style.AIGUIDE
+            ? AiguideScene.title(piece.sceneJson) : piece.title();
+    }
+
+    private void importAiScene(){
+        EditText input=new EditText(this);
+        input.setMinLines(4);input.setMaxLines(9);input.setTextSize(12);
+        input.setHint("{\"title\":\"...\",\"background\":\"#...\",\"elements\":[...]}");
+        FrameLayout wrap=new FrameLayout(this);
+        wrap.setPadding(dp(18),0,dp(18),0);
+        wrap.addView(input,new FrameLayout.LayoutParams(-1,-2));
+        new AlertDialog.Builder(this).setTitle("Importer aiguide JSON-manus")
+            .setMessage("Samme format som Python-bibliotekets CLI-bro. Import gjøres offline.")
+            .setView(wrap)
+            .setNegativeButton("Avbryt",null)
+            .setPositiveButton("Tegn",(d,w)->{
+                try{
+                    String normalized=AiguideScene.validate(input.getText().toString().trim());
+                    Artwork next=new Artwork(freshSeed(),Artwork.Style.AIGUIDE,0,
+                        .5,.5,.5,.5,0,0,normalized);
+                    show(next,true);
+                }catch(Exception ex){shortToast("Ugyldig bildemanus: se formatkravene.");}
+            }).show();
+    }
+
     private void show(Artwork next,boolean save){
         artwork=next;
         if(save)archive.remember(next);
