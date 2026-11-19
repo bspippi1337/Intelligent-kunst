@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Only the user-invoked AI atelier uses the network. Offline mode stays local. -->
-    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Fully offline. Photo selection uses Android's document picker. -->
     <application
         android:allowBackup="false"
         android:label="Intelligent Kunst"
@@ -9,6 +8,9 @@
         android:theme="@style/Theme.IntelligentKunst"
         android:supportsRtl="true"
         android:usesCleartextTraffic="false">
+        <activity
+            android:name=".ClassicalStudioActivity"
+            android:exported="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
