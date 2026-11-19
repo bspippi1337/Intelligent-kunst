@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.0 · Expressive Canvas · 2026-11-19
+
+- Expand AI scene grammar beyond rectangles, ellipses and polygons to filled/stroked Bezier paths with M/L/Q/C/Z instructions.
+- Enable bounded linear and radial gradients on vector drawing elements. Retain all v1/v2 archives and reproducible v3 AI DNA.
+- Enforce per-path maximum 64 commands, one starting M, closed filled paths and finite bounded geometry.
+- Native Java and the actual Python aiguide bridge normalize and validate the expanded format. Offline tests cover both accepted and hostile fixtures.
+- Include an independently imported example that needs no API key.
+
+**Research honesty:** The improved renderer broadens what a model can express. It is not a diffusion model, and no live model output or art quality is verified by tests.
+
+
 ## 0.4.0 · aiguide integration · 2026-11-19
 
 - Integrate original [aiguide-dev](https://github.com/bspippi1337/aiguide-dev) MIT prompt asset and `ask(query)` / private JSONL logging contract into an opt-in native Android AI atelier.
