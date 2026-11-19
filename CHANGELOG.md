@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.0 · aiguide integration · 2026-11-19
+
+- Integrate original [aiguide-dev](https://github.com/bspippi1337/aiguide-dev) MIT prompt asset and `ask(query)` / private JSONL logging contract into an opt-in native Android AI atelier.
+- Provide a direct Python companion `tools/aiguide_generate.py` which imports and calls `from aiguide import ask` and produces Android-importable scene JSON.
+- Model output is an actual bounded visual script, not merely a theme or a piece title. Android paints vector rectangles, ellipses, polygonal silhouettes, lines and cubic Bezier curves from it.
+- AI works get versioned, portable DNA v3 with the complete validated scene embedded, so previously generated art opens and exports offline. Existing v1/v2 artwork remains readable.
+- Only explicit AI user actions call the OpenAI API over HTTPS with an in-memory key that is never persisted; prompts and responses are recorded as private JSONL. No hidden model reasoning is extracted.
+- Offline procedural art engine remains fully functional. The application now declares INTERNET permission **solely for opt-in AI calls**, so earlier privacy claims of no network permission no longer apply.
+- Add Python bridge contract tests and pure JVM DNA compatibility tests. No live AI or API-key testing in CI.
+
+**Status:** This is a language-model-authored vector composition, not neural image diffusion or proof of human-level creative intelligence.
+
+
 ## 0.3.0 · From wallpaper to a visual argument · 2026-11-19
 
 - Replace screensaver-style geometric defaults with a generative grammar: eight ordinary objects x seven visual contradictions x three space types. Each rule creates a visible physical consequence (displaced shadow, void, afterimage, levitation, separation, overflow, wrong scale). Disallow conceptually incoherent combinations. Existing six legacy styles and their DNA remain readable and exportable.
