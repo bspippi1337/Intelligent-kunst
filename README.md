@@ -35,6 +35,14 @@ Ingen av motivene velges på grunnlag av brukerhistorikk eller personlige refera
 
 **Ærlig avgrensning:** dette er fremdeles en begrenset *regelbasert* oppfinner med bildepikselanalyse. Det er ikke en trent, åpent assosierende bildemodell, og pixel-statistikk alene kan ikke måle kunstnerisk kvalitet. Hvis målet er et virkelig overraskende kunstnersubjekt, må videre versjoner øke handlingsrom, kritikk og læring utover disse faste byggesteinene.
 
+## Atelier 005 · Fritt tegnede former, ikke bare clipart
+
+AI-bildemanus kan nå bruke **sammenhengende, fylte Bézier-former** med kubiske og kvadratiske kurver, egne konturer, og **lineære eller radiale fargeforløp**. Hver tegningsinstruksjon valideres før den tegnes. Ingen programkode, eksterne bildekilder eller ubegrensede tegningssekvenser.
+
+En komplett, nøkkelfri prøve ligger i [examples/expressive-vector-scene.json](examples/expressive-vector-scene.json). Importer via **DNA / ? → Importer AI-bildemanus** uten API-konto. Android og Python har tester for kurver, malingsdata og ugyldige kommandoer.
+
+Dette er bedre *uttrykksrom*, ikke dokumentasjon på at modellen automatisk produserer god kunst.
+
 ## Atelier 004 · aiguide: AI lager bildemanus, Android maler
 
 **✦ AI** åpner et eget atelier som bruker den originale `aiguide-dev`-promptmalen og den samme `ask(query)`- og JSONL-loggflyten i en native Android-port. En ekstern språkmodell lager en **ny, konkret bildekomposisjon med opptil 90 tegnbare elementer**, og Android-maleren gjengir den som et vektorbasert verk. AI-kunstverk lagres som DNA v3 med hele bildemanuset, slik at bildene kan åpnes og eksporteres senere **uten nett**.
