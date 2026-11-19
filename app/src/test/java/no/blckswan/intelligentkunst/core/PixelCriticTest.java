@@ -57,6 +57,23 @@ public final class PixelCriticTest {
         assertEquals(taste.reward(loved),restored.reward(loved),0);
     }
 
+    @Test public void importedAiScenesDoNotPretendToTrainOfflinePainter() {
+        ArtDirector.Taste taste=new ArtDirector.Taste();
+        Artwork remote=new Artwork(9911L,Artwork.Style.AIGUIDE,0,
+            .5,.5,.5,.5,0,0,"{}");
+        taste.like(remote);
+        taste.dislike(remote);
+        int styles=0,palettes=0,objects=0,propositions=0,rejections=0;
+        for(int v:taste.styleVotes())styles+=v;
+        for(int v:taste.paletteVotes())palettes+=v;
+        for(int v:taste.objectVotes())objects+=v;
+        for(int v:taste.propositionVotes())propositions+=v;
+        for(int v:taste.paletteRejections())rejections+=v;
+        for(int v:taste.objectRejections())rejections+=v;
+        for(int v:taste.propositionRejections())rejections+=v;
+        assertEquals(0,styles+palettes+objects+propositions+rejections);
+    }
+
     @Test public void rejectionMovesScoresAwayFromBoringIdeas() {
         ArtDirector.Taste taste=new ArtDirector.Taste();
         Artwork ignored=new ArtDirector().create(700L,
