@@ -34,7 +34,7 @@ jobs:
         with:
           gradle-version: '8.9'
       - name: Test core without Android
-        run: ./tools/test-core.sh
+        run: sh ./tools/test-core.sh
       - name: Build and test debug APK
         run: gradle --no-daemon :app:assembleDebug :app:testDebugUnitTest
       - name: Upload installable test APK
