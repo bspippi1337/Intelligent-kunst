@@ -35,6 +35,27 @@ public final class AiguideScene {
             if(!Double.isFinite(alpha)||alpha<0.04||alpha>1)
                 throw new JSONException("Invalid opacity");
             clean.put("alpha",alpha);
+            if(el.has("gradient")) {
+                JSONObject gradient=el.getJSONObject("gradient");
+                String type=gradient.getString("type");
+                if(!"linear".equals(type)&&!"radial".equals(type))
+                    throw new JSONException("Unsupported gradient");
+                JSONObject safeGradient=new JSONObject();
+                safeGradient.put("type",type);
+                safeGradient.put("start",color(gradient.getString("start")));
+                safeGradient.put("end",color(gradient.getString("end")));
+                if("linear".equals(type)) {
+                    coord(gradient,safeGradient,"x1");coord(gradient,safeGradient,"y1");
+                    coord(gradient,safeGradient,"x2");coord(gradient,safeGradient,"y2");
+                    double dx=safeGradient.getDouble("x1")-safeGradient.getDouble("x2");
+                    double dy=safeGradient.getDouble("y1")-safeGradient.getDouble("y2");
+                    if(dx*dx+dy*dy<.0001)throw new JSONException("Degenerate gradient");
+                } else {
+                    coord(gradient,safeGradient,"cx");coord(gradient,safeGradient,"cy");
+                    extent(gradient,safeGradient,"r");
+                }
+                clean.put("gradient",safeGradient);
+            }
             switch(kind){
                 case "rect":
                 case "ellipse":
@@ -51,6 +72,56 @@ public final class AiguideScene {
                     coord(el,clean,"cx2");coord(el,clean,"cy2");
                     coord(el,clean,"x2");coord(el,clean,"y2");
                     thickness(el,clean);break;
+                case "path":
+                    String mode=el.optString("mode","fill");
+                    if(!"fill".equals(mode)&&!"stroke".equals(mode))
+                        throw new JSONException("Invalid path mode");
+                    clean.put("mode",mode);
+                    if("stroke".equals(mode))thickness(el,clean);
+                    JSONArray commands=el.getJSONArray("commands");
+                    if(commands.length()<3||commands.length()>64)
+                        throw new JSONException("Invalid path length");
+                    JSONArray safeCommands=new JSONArray();
+                    int draws=0;
+                    for(int j=0;j<commands.length();j++) {
+                        JSONObject instruction=commands.getJSONObject(j);
+                        String op=instruction.getString("op");
+                        if(j==0 && !"M".equals(op))throw new JSONException("Path must start at M");
+                        if(j>0 && "M".equals(op))throw new JSONException("Only one contour per path");
+                        JSONObject safeCommand=new JSONObject().put("op",op);
+                        switch(op){
+                            case "M":
+                                coord(instruction,safeCommand,"x");
+                                coord(instruction,safeCommand,"y");break;
+                            case "L":
+                                coord(instruction,safeCommand,"x");
+                                coord(instruction,safeCommand,"y");draws++;break;
+                            case "Q":
+                                coord(instruction,safeCommand,"cx");
+                                coord(instruction,safeCommand,"cy");
+                                coord(instruction,safeCommand,"x");
+                                coord(instruction,safeCommand,"y");draws++;break;
+                            case "C":
+                                coord(instruction,safeCommand,"cx1");
+                                coord(instruction,safeCommand,"cy1");
+                                coord(instruction,safeCommand,"cx2");
+                                coord(instruction,safeCommand,"cy2");
+                                coord(instruction,safeCommand,"x");
+                                coord(instruction,safeCommand,"y");draws++;break;
+                            case "Z":
+                                if(j!=commands.length()-1)
+                                    throw new JSONException("Z must close at end");
+                                break;
+                            default:throw new JSONException("Unknown path instruction");
+                        }
+                        safeCommands.put(safeCommand);
+                    }
+                    if(draws<2)throw new JSONException("Path too simple");
+                    if("fill".equals(mode) && !"Z".equals(
+                        commands.getJSONObject(commands.length()-1).getString("op")))
+                        throw new JSONException("Filled path must close with Z");
+                    clean.put("commands",safeCommands);
+                    break;
                 case "poly":
                     JSONArray pts=el.getJSONArray("points");
                     if(pts.length()<3||pts.length()>18)throw new JSONException("Invalid polygon");
