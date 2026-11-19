@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.0 · From wallpaper to a visual argument · 2026-11-19
+
+- Replace screensaver-style procedural output for new creations with four designed, story-led limited-palette print compositions: lighthouse, threshold, solitary tree, airborne whale. Existing six styles and their DNA remain readable and exportable.
+- A two-stage studio: 12 independently rendered candidate images, each from 42 genetic proposals, are evaluated from actual preview pixels before selection. All CPU work runs off the UI thread.
+- New `PixelCritic` measures tonal range, image-space focus, quiet space, mark density, composition placement and 64-bit visual hash similarity against recent work.
+- Open `Kunstnerens egenkritikk` to inspect the actual rendered bitmap's measurable image features and compare them to the old genome-only heuristic.
+- Add human-authored narrative intentions, scene-specific titles, balanced colour palettes, ink texture and intentional silhouettes.
+- Preserve deterministic DNA, offline rendering, gallery, PNG exports and backwards compatibility with earlier versions.
+- New pixel fixture tests and deterministic story-generation checks.
+
+**Research honesty:** Pixel statistics are not semantic understanding or an art-trained neural model. The four themes are authored visual grammar, not an agent inventing unrestricted concepts. Image inspection only approximates contrast, focus, space and novelty. Perceptual and artistic evaluation by humans is still essential.
+
+
 ## 0.2.0 · Atelier 002 · 2026-11-19
 
 - One shared generative artwork per UTC calendar day, offline and reproducible.
