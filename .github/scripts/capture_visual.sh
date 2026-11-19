@@ -67,5 +67,16 @@ for mode in oil charcoal; do
     sleep 15
     adb exec-out screencap -p > "visual/study-photo-$mode.png"
     test -s "visual/study-photo-$mode.png"
-done
+done 
+# A classical life study and a photo painting must never render as the
+# same image. We previously found a null-intent-fixture regression here.
+if cmp -s visual/study-classical-figure.png visual/study-photo-oil.png; then
+    echo "Visual regression: classical and oil fixtures identical" >&2
+    exit 1
+fi
+if cmp -s visual/study-photo-oil.png visual/study-photo-charcoal.png; then
+    echo "Visual regression: oil and charcoal fixtures identical" >&2
+    exit 1
+fi
+adb shell pidof no.blckswan.intelligentkunst.lab >/dev/null
 sha256sum visual/*.png
