@@ -485,7 +485,7 @@ public final class MainActivity extends Activity {
                     if(imported.style==Artwork.Style.AIGUIDE)
                         AiguideScene.validate(imported.sceneJson);
                     show(imported,true);
-                }catch(RuntimeException ex){shortToast("Ugyldig DNA. Ingen endring ble gjort.");}
+                }catch(Exception ex){shortToast("Ugyldig DNA. Ingen endring ble gjort.");}
             }).show();
     }
     private void about(){
