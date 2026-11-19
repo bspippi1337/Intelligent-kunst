@@ -271,7 +271,7 @@ public final class ClassicalStudioActivity extends Activity {
                 try{
                     startActivity(local);
                     message.setText("PROMPT KOPIERT · LIM INN I LOKAL DIFFUSJON · RETURNER MED ÅPNE FOTO");
-                }catch(ActivityNotFoundException error){
+                }catch(ActivityNotFoundException|SecurityException error){
                     new AlertDialog.Builder(this)
                         .setTitle("Lokal modellapp er ikke installert")
                         .setMessage("Prompten er kopiert. Installer Local Diffusion "
