@@ -22,7 +22,7 @@ Hvert trykk på **SKAP NYTT** setter nå et lite digitalt atelier i arbeid:
 1. En regelbasert idémotor skaper **12 komposisjoner med motiver**. Hver av dem er valgt blant **42 DNA-forslag**.
 2. Alle tolv får sin egen ferdig rendrerte **192 × 320** pixelskisse. Ingen skisser vurderes bare ved å lese sine parametere.
 3. En åpen, lokal `PixelCritic` måler **lyskontrast, blikkfang, tomrom, tegningsgrad, plassering** og likhet med siste bildene.
-4. En kombinert poengsum velger ett bilde. Du kan **EVOLVERE**, gi tilbakemelding med **♡ LÆR**, se kritikken, eksportere PNG, kopiere DNA eller samle bilder.
+4. En kombinert poengsum velger ett bilde. Du kan **EVOLVERE**, trykke **♡ LÆR** for å støtte idéen, eller **holde LÆR inne** for å avvise den og straks få et nytt forsøk. Positive og negative vurderinger gjelder separat motiv, konsept og palett. Du kan se kritikken, eksportere PNG, kopiere DNA eller samle bilder.
 5. Eksport gir høyoppløselig **2160 × 3840 PNG**. Alt fungerer frakoblet.
 
 ### En fysisk idé, et visuelt utsagn
