@@ -26,6 +26,7 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.text.InputType;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -36,6 +37,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import no.blckswan.intelligentkunst.ai.AiguideClient;
+import no.blckswan.intelligentkunst.ai.AiguideScene;
 import no.blckswan.intelligentkunst.core.ArtDirector;
 import no.blckswan.intelligentkunst.core.Artwork;
 import no.blckswan.intelligentkunst.core.CritiqueReport;
@@ -46,7 +49,7 @@ import no.blckswan.intelligentkunst.render.StudioDirector;
 import no.blckswan.intelligentkunst.storage.ArtArchive;
 import no.blckswan.intelligentkunst.ui.ArtworkView;
 
-/** KUNST / a deliberately offline, native, autonomous generative artist. */
+/** KUNST / native procedural studio + explicit opt-in AIGUIDE cloud composition. */
 public final class MainActivity extends Activity {
     private static final int INK=0xFFF6F4ED;
     private static final int QUIET=0xFFB1B4B5;
@@ -63,7 +66,7 @@ public final class MainActivity extends Activity {
     private Artwork artwork;
     private ArtworkView gallery;
     private TextView title, metadata, narration, status, edition;
-    private TextView createButton, evolveButton, likeButton, exportButton, archiveButton;
+    private TextView createButton, evolveButton, aiButton, likeButton, exportButton, archiveButton;
     private LinearLayout top, bottom;
     private boolean exporting=false;
     private boolean composing=false;
@@ -78,7 +81,7 @@ public final class MainActivity extends Activity {
         archive=new ArtArchive(this);
         constructUi();
         Artwork last=archive.current();
-        if(last!=null && last.style==Artwork.Style.FABLE)show(last,false);
+        if(last!=null && (last.style==Artwork.Style.FABLE || last.style==Artwork.Style.AIGUIDE))show(last,false);
         else newArtwork(); // old works remain in the archive; first launch shows the new painter
     }
 
@@ -114,7 +117,7 @@ public final class MainActivity extends Activity {
         dna.setOnClickListener(v->showDnaMenu());
         brandRow.addView(dna,new LinearLayout.LayoutParams(dp(90),dp(40)));
 
-        edition=text("ATELIER 003     /     LOKALT · UTEN SKY",9,ACID,Typeface.NORMAL);
+        edition=text("ATELIER 004     /     LOKALT + VALGFRI AI",9,ACID,Typeface.NORMAL);
         edition.setLetterSpacing(.13f);edition.setPadding(0,dp(21),0,0);
         top.addView(edition);
 
@@ -140,11 +143,15 @@ public final class MainActivity extends Activity {
         bottom.addView(primaryRow,new LinearLayout.LayoutParams(-1,dp(55)));
         createButton=button("✳  SKAP NYTT",true,false);
         evolveButton=button("↗  EVOLVER",false,false);
-        primaryRow.addView(createButton,weighted(1.35f,0));
-        primaryRow.addView(space(dp(9)));
-        primaryRow.addView(evolveButton,weighted(1f,0));
+        aiButton=button("✦  AI",false,false);
+        primaryRow.addView(createButton,weighted(1.16f,0));
+        primaryRow.addView(space(dp(7)));
+        primaryRow.addView(evolveButton,weighted(.95f,0));
+        primaryRow.addView(space(dp(7)));
+        primaryRow.addView(aiButton,weighted(.70f,0));
         createButton.setOnClickListener(v->newArtwork());
         evolveButton.setOnClickListener(v->evolveArtwork());
+        aiButton.setOnClickListener(v->openAiAtelier(null));
 
         LinearLayout secondaryRow=new LinearLayout(this);
         LinearLayout.LayoutParams secondParams=new LinearLayout.LayoutParams(-1,dp(45));
@@ -212,13 +219,18 @@ public final class MainActivity extends Activity {
 
     private long freshSeed(){return random.nextLong() ^ SystemClock.elapsedRealtimeNanos();}
     private void newArtwork(){compose(null);}
-    private void evolveArtwork(){compose(artwork);}
+    private void evolveArtwork(){
+        if(artwork!=null && artwork.style==Artwork.Style.AIGUIDE){
+            openAiAtelier(AiguideScene.intent(artwork.sceneJson));return;
+        }
+        compose(artwork);
+    }
 
     /** One in-flight job; rendering and evaluation never block the UI thread. */
     private void compose(Artwork parent){
         if(composing)return;
         composing=true;
-        createButton.setEnabled(false);evolveButton.setEnabled(false);
+        createButton.setEnabled(false);evolveButton.setEnabled(false);aiButton.setEnabled(false);
         createButton.setText("…  TENKER");
         status.setText("MALER 12 ULIKE KANDIDATER  ·  SER PÅ FERDIGE BILDER");
         final long seed=freshSeed();
@@ -231,7 +243,7 @@ public final class MainActivity extends Activity {
                 runOnUiThread(()->{
                     if(isFinishing()||isDestroyed()||request!=compositionToken.get())return;
                     composing=false;
-                    createButton.setEnabled(true);evolveButton.setEnabled(true);
+                    createButton.setEnabled(true);evolveButton.setEnabled(true);aiButton.setEnabled(true);
                     createButton.setText("✳  SKAP NYTT");
                     show(result.artwork,true);
                     status.setText(result.proposals + " BILDER SETT  ·  BILDE + KONSEPT-KRITIKK  "
@@ -241,7 +253,7 @@ public final class MainActivity extends Activity {
                 runOnUiThread(()->{
                     if(isFinishing()||isDestroyed()||request!=compositionToken.get())return;
                     composing=false;
-                    createButton.setEnabled(true);evolveButton.setEnabled(true);
+                    createButton.setEnabled(true);evolveButton.setEnabled(true);aiButton.setEnabled(true);
                     createButton.setText("✳  SKAP NYTT");
                     status.setText("KUNSTNEREN MÅTTE AVBRYTE  ·  TRYKK IGJEN");
                 });
@@ -254,11 +266,14 @@ public final class MainActivity extends Activity {
         gallery.setArtwork(next);
         metadata.setText(next.style.label + "   /   GEN " + String.format(Locale.ROOT,"%02d",next.generation)
             + "   /   " + next.id().substring(0,6));
-        title.setText(next.title());
-        narration.setText(next.intention());
-        status.setText("VERKETS SELEKSJONSSCORE   " + Math.round(next.score*100) + "/100"
+        title.setText(displayTitle(next));
+        narration.setText(next.style==Artwork.Style.AIGUIDE
+            ? AiguideScene.intent(next.sceneJson) : next.intention());
+        status.setText((next.style==Artwork.Style.AIGUIDE ? "BILDEANALYSE   " : "VERKETS SELEKSJONSSCORE   ")
+            + Math.round(next.score*100) + "/100"
             + (next.hasParent ? "   ·   FRA " + String.format(Locale.ROOT,"%016X",next.parentSeed).substring(0,6) : ""));
-        edition.setText("ATELIER 003     /     VERK " + archive.recent().size() + " · UTEN SKY");
+        edition.setText("ATELIER 004     /     VERK " + archive.recent().size()
+            + (next.style==Artwork.Style.AIGUIDE ? " · AIGUIDE" : " · LOKALT"));
         likeButton.setText(archive.isSaved(next) ? "♥  LÆRT" :
             archive.isRejected(next) ? "✕  AVVIST" : "♡  LÆR");
     }
