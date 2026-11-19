@@ -73,6 +73,26 @@ public final class PixelCriticTest {
         assertEquals(after,restored.reward(ignored),0);
     }
 
+    @Test public void independentWorksCannotRepeatRecentSubjectsOrIdeas() {
+        ArtDirector author=new ArtDirector();
+        ArtDirector.Taste blank=new ArtDirector.Taste();
+        Artwork first=author.create(42,java.util.Collections.emptyList(),blank);
+        assertFalse(ConceptDiversity.isFresh(first,java.util.Collections.singletonList(first)));
+        StoryPlan.Idea original=StoryPlan.generate(first.seed);
+        Artwork different=null;
+        for(int seed=0;seed<1000;seed++) {
+            Artwork candidate=author.create(seed,java.util.Collections.emptyList(),blank);
+            StoryPlan.Idea idea=StoryPlan.generate(candidate.seed);
+            if(idea.object!=original.object && idea.proposition!=original.proposition){
+                different=candidate;break;
+            }
+        }
+        assertNotNull(different);
+        assertTrue(ConceptDiversity.isFresh(different,
+            java.util.Collections.singletonList(first)));
+        assertTrue(ConceptDiversity.isFresh(first,java.util.Collections.emptyList()));
+    }
+
     @Test public void backwardsCompatibleFamilyHasNarrativeIntent() {
         for(int i=0;i<500;i++) {
             Artwork art=new ArtDirector().create(i,java.util.Collections.emptyList(),new ArtDirector.Taste());
