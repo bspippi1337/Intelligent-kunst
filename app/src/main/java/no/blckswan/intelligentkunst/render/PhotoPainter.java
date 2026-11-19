@@ -31,7 +31,7 @@ public final class PhotoPainter {
         ImageDecoder.Source source=ImageDecoder.createSource(context.getContentResolver(),uri);
         return ImageDecoder.decodeBitmap(source,(decoder,info,src)->{
             int width=info.getSize().getWidth(),height=info.getSize().getHeight();
-            if(width<1||height<1)throw new IOException("Empty image");
+            if(width<1||height<1)throw new IllegalArgumentException("Empty image");
             double factor=Math.min(1.0,(double)maxDimension/Math.max(width,height));
             decoder.setTargetSize(Math.max(1,(int)Math.round(width*factor)),
                 Math.max(1,(int)Math.round(height*factor)));
