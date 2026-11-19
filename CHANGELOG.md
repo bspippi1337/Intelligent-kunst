@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.0 · Atelier 002 · 2026-11-19
+
+- One shared generative artwork per UTC calendar day, offline and reproducible.
+- Auditable aesthetic critique, matching the core selection objective.
+- DNA v2 records parent seed; v1 archive and import compatibility retained.
+- Locally browsable ancestry, up to 300 recently encountered works.
+- Full-canvas exhibition mode: tap artwork to hide or restore interface.
+- Limit taste training to one vote per saved artwork.
+- Added JVM/JUnit regression tests for lineage, 365 daily editions, critic and codecs.
+
+**Verification:** JVM tests and Android CI are tracked separately. Do not label a build as device-tested without installing it.
+
+
 ## 0.1.0 · First light · 2026-11-19
 
 - Original autonomous genetic art director with 42 candidates and transparent critique.

@@ -37,10 +37,25 @@ public final class Artwork {
     public final double drift;
     public final double score;
     public final int generation;
+    public final boolean hasParent;
+    public final long parentSeed;
 
     public Artwork(long seed, Style style, int palette, double energy, double complexity,
                    double balance, double drift, double score, int generation) {
-        if (style == null || palette < 0 || palette >= PALETTES.length || generation < 0) {
+        this(seed, style, palette, energy, complexity, balance, drift, score, generation, false, 0L);
+    }
+
+    /** DNA v2: records which earlier work was deliberately evolved. */
+    public Artwork(long seed, Style style, int palette, double energy, double complexity,
+                   double balance, double drift, double score, int generation, long parentSeed) {
+        this(seed, style, palette, energy, complexity, balance, drift, score, generation, true, parentSeed);
+    }
+
+    private Artwork(long seed, Style style, int palette, double energy, double complexity,
+                    double balance, double drift, double score, int generation,
+                    boolean hasParent, long parentSeed) {
+        if (style == null || palette < 0 || palette >= PALETTES.length || generation < 0
+                || (hasParent && generation == 0)) {
             throw new IllegalArgumentException("Invalid artwork genome");
         }
         this.seed = seed;
@@ -52,6 +67,8 @@ public final class Artwork {
         this.drift = clamp(drift);
         this.score = clamp(score);
         this.generation = generation;
+        this.hasParent = hasParent;
+        this.parentSeed = parentSeed;
     }
 
     private static double clamp(double n) { return Double.isFinite(n) ? Math.max(0, Math.min(1, n)) : 0.5; }
@@ -68,17 +85,32 @@ public final class Artwork {
 
     /** Compact, versioned record for permanent offline storage. No Java serialization. */
     public String encode() {
-        return String.format(Locale.ROOT, "1:%s:%d:%d:%.6f:%.6f:%.6f:%.6f:%.6f:%d",
+        String record = String.format(Locale.ROOT, "1:%s:%d:%d:%.6f:%.6f:%.6f:%.6f:%.6f:%d",
             id(), style.ordinal(), palette, energy, complexity, balance, drift, score, generation);
+        return hasParent ? "2" + record.substring(1) + ":"
+            + String.format(Locale.ROOT, "%016X", parentSeed) : record;
     }
 
     public static Artwork decode(String value) {
+        if (value == null) throw new IllegalArgumentException("Missing DNA");
         String[] p = value.split(":", -1);
-        if (p.length != 10 || !"1".equals(p[0])) throw new IllegalArgumentException("Unknown artwork format");
+        boolean v2 = p.length == 11 && "2".equals(p[0]);
+        if (!v2 && !(p.length == 10 && "1".equals(p[0])))
+            throw new IllegalArgumentException("Unknown artwork format");
         int style = Integer.parseInt(p[2]);
         if (style < 0 || style >= Style.values().length) throw new IllegalArgumentException("Invalid style");
-        return new Artwork(Long.parseUnsignedLong(p[1], 16), Style.values()[style],
-            Integer.parseInt(p[3]), Double.parseDouble(p[4]), Double.parseDouble(p[5]),
-            Double.parseDouble(p[6]), Double.parseDouble(p[7]), Double.parseDouble(p[8]), Integer.parseInt(p[9]));
+        long seed = Long.parseUnsignedLong(p[1], 16);
+        int palette = Integer.parseInt(p[3]);
+        double energy = Double.parseDouble(p[4]);
+        double complexity = Double.parseDouble(p[5]);
+        double balance = Double.parseDouble(p[6]);
+        double drift = Double.parseDouble(p[7]);
+        double score = Double.parseDouble(p[8]);
+        int generation = Integer.parseInt(p[9]);
+        if (v2) return new Artwork(seed, Style.values()[style], palette,
+            energy, complexity, balance, drift, score, generation,
+            Long.parseUnsignedLong(p[10], 16));
+        return new Artwork(seed, Style.values()[style], palette,
+            energy, complexity, balance, drift, score, generation);
     }
 }
