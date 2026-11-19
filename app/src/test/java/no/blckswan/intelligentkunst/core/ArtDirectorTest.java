@@ -35,6 +35,14 @@ public class ArtDirectorTest {
         assertEquals(parent.seed,decoded.parentSeed);
         assertEquals(child.encode(),decoded.encode());
     }
+    @Test public void aiScenesAreVersionedAndPreserved() {
+        String scene="{\\\"version\\\":1,\\\"title\\\":\\\"No familiar images\\\",\\\"elements\\\":[]}";
+        Artwork a=new Artwork(-1L,Artwork.Style.AIGUIDE,0,.5,.5,.5,.5,0.75,0,scene);
+        assertEquals("3",a.encode().split(":")[0]);
+        assertEquals(scene,Artwork.decode(a.encode()).sceneJson);
+        assertEquals(a.encode(),Artwork.decode(a.encode()).encode());
+        assertEquals(Artwork.Style.AIGUIDE,Artwork.decode(a.encode()).style);
+    }
     @Test public void v1ArchivesRemainReadable() {
         Artwork original=director.create(42L,Collections.emptyList(),taste);
         assertEquals("1",original.encode().split(":")[0]);
