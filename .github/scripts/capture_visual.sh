@@ -2,7 +2,7 @@
 set -euo pipefail
 gradle --no-daemon :app:assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
-adb shell am start -n no.blckswan.intelligentkunst/.MainActivity
+adb shell am start -n no.blckswan.intelligentkunst.lab/no.blckswan.intelligentkunst.MainActivity
 sleep 20
 mkdir -p visual
 adb exec-out screencap -p > visual/study-00.png
@@ -14,8 +14,8 @@ for n in 01 02 03 04 05; do
     test -s "visual/study-${n}.png"
 done
 # Launch a deterministic non-network test of the new curved vector renderer.
-adb shell am force-stop no.blckswan.intelligentkunst
-adb shell am start -n no.blckswan.intelligentkunst/.MainActivity \
+adb shell am force-stop no.blckswan.intelligentkunst.lab
+adb shell am start -n no.blckswan.intelligentkunst.lab/no.blckswan.intelligentkunst.MainActivity \
     --ez ik_visual_fixture true
 sleep 12
 adb exec-out screencap -p > visual/study-vector-fixture.png
