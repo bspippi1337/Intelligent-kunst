@@ -35,6 +35,13 @@ Ingen av motivene velges på grunnlag av brukerhistorikk eller personlige refera
 
 **Ærlig avgrensning:** dette er fremdeles en begrenset *regelbasert* oppfinner med bildepikselanalyse. Det er ikke en trent, åpent assosierende bildemodell, og pixel-statistikk alene kan ikke måle kunstnerisk kvalitet. Hvis målet er et virkelig overraskende kunstnersubjekt, må videre versjoner øke handlingsrom, kritikk og læring utover disse faste byggesteinene.
 
+## Atelier 007.2 · Renere arbeidsflate
+
+Den første Android-emulatorprøven av nevralknappen viste en altfor stor
+dialog som skjøv handlingene fra hverandre. Nå ser du en **kort prompt,
+en kort ressursadvarsel og tre enkle valg**. Hold LOKAL AI inne for
+detaljer om modellens RAM-krav, lagringstillatelser, lisenser og personvern.
+
 ## Atelier 007.1 · Responsivt lerret
 
 På kompakte telefoner og i liggende format ruller verktøypanelet uavhengig
