@@ -404,7 +404,8 @@ public final class MainActivity extends Activity {
     private void showDnaMenu(){
         new AlertDialog.Builder(this).setTitle("KUNSTENS DNA")
             .setItems(new String[]{"Dagens verk · samme for alle (UTC)", "Kunstnerens egenkritikk",
-                "Finn forelderverket", "Kopier verket som DNA", "Importer et DNA", "Om eksperimentet"},
+                "Finn forelderverket", "Kopier verket som DNA", "Importer et DNA",
+                "Importer AI-bildemanus (JSON)", "Om eksperimentet"},
                 (d,which)->{
                     if(which==0)dailyEdition();
                     else if(which==1)showCritique();
@@ -414,7 +415,8 @@ public final class MainActivity extends Activity {
                         clips.setPrimaryClip(ClipData.newPlainText("Kunst-DNA",artwork.encode()));
                         shortToast("DNA kopiert. Dette kan gjenskape verket.");
                     }else if(which==4)importDna();
-                    else if(which==5)about();
+                    else if(which==5)importAiScene();
+                    else if(which==6)about();
                 }).show();
     }
 
@@ -469,7 +471,7 @@ public final class MainActivity extends Activity {
     private void importDna(){
         EditText input=new EditText(this);input.setSingleLine(false);
         input.setMaxLines(4);input.setTextSize(13);
-        input.setHint("1:SEED:STYLE:... eller 2:SEED:...:PARENT");
+        input.setHint("DNA v1, v2 eller v3 (inkludert AI-tegning)");
         FrameLayout wrap=new FrameLayout(this);wrap.setPadding(dp(20),0,dp(20),0);
         wrap.addView(input,new FrameLayout.LayoutParams(-1,-2));
         new AlertDialog.Builder(this).setTitle("Importer DNA")
@@ -478,8 +480,11 @@ public final class MainActivity extends Activity {
             .setPositiveButton("Åpne",(dialog,which)->{
                 try{
                     String source=input.getText().toString().trim();
-                    if(source.length()>200)throw new IllegalArgumentException("DNA too long");
-                    show(Artwork.decode(source),true);
+                    if(source.length()>30000)throw new IllegalArgumentException("DNA too long");
+                    Artwork imported=Artwork.decode(source);
+                    if(imported.style==Artwork.Style.AIGUIDE)
+                        AiguideScene.validate(imported.sceneJson);
+                    show(imported,true);
                 }catch(RuntimeException ex){shortToast("Ugyldig DNA. Ingen endring ble gjort.");}
             }).show();
     }
@@ -496,8 +501,12 @@ public final class MainActivity extends Activity {
                 + "Den bruker ingen av dine tidligere prosjekter eller motiver.\n\n"
                 + "LÆR gir én positiv tilbakemelding. Hold LÆR inne for å AVVISE "
                 + "motivet og ideen, og skape et nytt forsøk.\n\n"
-                + "Dette er håndprogrammert generativ kunst med bildepikselanalyse, "
-                + "ikke en trent generativ bildemodell. Ingen nettverkstillatelser.")
+                + "Offline-modusen er regelbasert og fungerer uten nett. "
+                + "AI-knappen bruker aiguide-mal og en ekstern tekstmodell som lager et konkret "
+                + "tegnbart bildemanus. Bruk av API krever egen nøkkel og nettverk. "
+                + "Du kan importere et bildemanus fra Python-aiguide uten API-kall i appen. "
+                + "Nøkler blir ikke lagret; synlig AI-forespørsel og resultat får lokal logg. "
+                + "Bildescoren er bare strukturell analyse, ikke kunstnerisk forståelse.")
             .setPositiveButton("Tilbake til atelieret",null).show();
     }
     private void openArchive(){
@@ -510,7 +519,7 @@ public final class MainActivity extends Activity {
         String[] entries=new String[collection.size()];
         for(int i=0;i<entries.length;i++){
             Artwork a=collection.get(i);
-            entries[i]=a.title()+"\n"+a.style.label+" · "+a.id().substring(0,8);
+            entries[i]=displayTitle(a)+"\n"+a.style.label+" · "+a.id().substring(0,8);
         }
         new AlertDialog.Builder(this).setTitle("Din samling · "+collection.size()+" verk")
             .setItems(entries,(d,choice)->show(collection.get(choice),true))
@@ -519,12 +528,12 @@ public final class MainActivity extends Activity {
     }
     private void deleteFromArchive(List<Artwork> collection){
         String[] names=new String[collection.size()];
-        for(int i=0;i<names.length;i++)names[i]=collection.get(i).title();
+        for(int i=0;i<names.length;i++)names[i]=displayTitle(collection.get(i));
         new AlertDialog.Builder(this).setTitle("Velg verk å fjerne")
             .setItems(names,(d,index)->{
                 Artwork target=collection.get(index);
                 new AlertDialog.Builder(this).setTitle("Fjerne fra samlingen?")
-                    .setMessage(target.title()+" slettes bare fra den lokale samlingen, ikke fra eventuelle eksporterte PNG-filer.")
+                    .setMessage(displayTitle(target)+" slettes bare fra den lokale samlingen, ikke fra eventuelle eksporterte PNG-filer.")
                     .setPositiveButton("Slett",(confirm,which)->{archive.delete(target);shortToast("Fjernet fra samlingen");})
                     .setNegativeButton("Avbryt",null).show();
             }).setNegativeButton("Avbryt",null).show();
