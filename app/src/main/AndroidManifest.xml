@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Fully offline. Photo selection uses Android's document picker. -->
     <application
         android:allowBackup="false"
         android:label="Intelligent Kunst"
         android:icon="@drawable/ic_launcher"
         android:theme="@style/Theme.IntelligentKunst"
-        android:supportsRtl="true">
+        android:supportsRtl="true"
+        android:usesCleartextTraffic="false">
+        <activity
+            android:name=".ClassicalStudioActivity"
+            android:exported="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

@@ -30,11 +30,18 @@ public final class CritiqueReport {
             for (Artwork r : recent) {
                 if (r.seed == a.seed) continue;
                 if (seen++ >= 12) break;
-                double distance = (r.style == a.style ? 0 : .45)
-                    + (r.palette == a.palette ? 0 : .22)
+                double distance = (r.style == a.style ? 0 : .25)
+                    + (r.palette == a.palette ? 0 : .12)
                     + Math.abs(r.energy - a.energy) * .11
                     + Math.abs(r.complexity - a.complexity) * .11
                     + Math.abs(r.balance - a.balance) * .11;
+                if(r.style==Artwork.Style.FABLE && a.style==Artwork.Style.FABLE) {
+                    StoryPlan.Idea previous=StoryPlan.generate(r.seed);
+                    StoryPlan.Idea proposed=StoryPlan.generate(a.seed);
+                    if(previous.object!=proposed.object)distance+=.18;
+                    if(previous.proposition!=proposed.proposition)distance+=.26;
+                    if(previous.space!=proposed.space)distance+=.07;
+                }
                 novelty = Math.min(novelty, distance);
             }
         }

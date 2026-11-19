@@ -28,28 +28,38 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.io.OutputStream;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import no.blckswan.intelligentkunst.ai.AiguideScene;
 import no.blckswan.intelligentkunst.core.ArtDirector;
 import no.blckswan.intelligentkunst.core.Artwork;
 import no.blckswan.intelligentkunst.core.CritiqueReport;
 import no.blckswan.intelligentkunst.core.DailyEdition;
+import no.blckswan.intelligentkunst.core.PixelCritic;
 import no.blckswan.intelligentkunst.render.RenderEngine;
+import no.blckswan.intelligentkunst.render.StudioDirector;
 import no.blckswan.intelligentkunst.storage.ArtArchive;
 import no.blckswan.intelligentkunst.ui.ArtworkView;
 
-/** KUNST / a deliberately offline, native, autonomous generative artist. */
+/** KUNST / native offline creator, image-manus import and local classical studio. */
 public final class MainActivity extends Activity {
     private static final int INK=0xFFF6F4ED;
     private static final int QUIET=0xFFB1B4B5;
     private static final int ACID=0xFFD9FB81;
     private static final int DARK=0xFF121519;
     private final ArtDirector director=new ArtDirector();
+    private final StudioDirector studio=new StudioDirector();
+    private final ExecutorService composer=Executors.newSingleThreadExecutor();
+    private final AtomicInteger compositionToken=new AtomicInteger();
     private final ExecutorService exports=Executors.newSingleThreadExecutor();
     private final SecureRandom random=new SecureRandom();
 
@@ -57,9 +67,10 @@ public final class MainActivity extends Activity {
     private Artwork artwork;
     private ArtworkView gallery;
     private TextView title, metadata, narration, status, edition;
-    private TextView createButton, evolveButton, likeButton, exportButton, archiveButton;
+    private TextView createButton, evolveButton, aiButton, likeButton, exportButton, archiveButton;
     private LinearLayout top, bottom;
     private boolean exporting=false;
+    private boolean composing=false;
     private boolean theaterMode=false;
 
     @Override public void onCreate(Bundle state) {
@@ -70,9 +81,29 @@ public final class MainActivity extends Activity {
             | View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
         archive=new ArtArchive(this);
         constructUi();
+        // Debug-only integration fixture: renders the same bundled scene the user can
+        // open from the menu. Never exposed by a production build intent.
+        if((getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE)!=0
+            && getIntent().getBooleanExtra("ik_visual_fixture",false)){
+            loadDemoScene();return;
+        }
+        if((getApplicationInfo().flags &
+            android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE)!=0
+            && (getIntent().getBooleanExtra("ik_classical_fixture",false)
+                || getIntent().getBooleanExtra("ik_neural_fixture",false)
+                || getIntent().hasExtra("ik_photo_fixture"))){
+            Intent fixture=new Intent(this,ClassicalStudioActivity.class)
+                .putExtra("ik_classical_fixture",true)
+                .putExtra("ik_neural_fixture",
+                    getIntent().getBooleanExtra("ik_neural_fixture",false));
+            String photoFixture=getIntent().getStringExtra("ik_photo_fixture");
+            if(photoFixture!=null)fixture.putExtra("ik_photo_fixture",photoFixture);
+            startActivity(fixture);
+            return;
+        }
         Artwork last=archive.current();
-        if(last!=null)show(last,false);
-        else newArtwork();
+        if(last!=null && (last.style==Artwork.Style.FABLE || last.style==Artwork.Style.AIGUIDE))show(last,false);
+        else newArtwork(); // old works remain in the archive; first launch shows the new painter
     }
 
     private void constructUi() {
@@ -107,7 +138,7 @@ public final class MainActivity extends Activity {
         dna.setOnClickListener(v->showDnaMenu());
         brandRow.addView(dna,new LinearLayout.LayoutParams(dp(90),dp(40)));
 
-        edition=text("ATELIER 001     /     LOKALT · UTEN SKY",9,ACID,Typeface.NORMAL);
+        edition=text("ATELIER 006     /     OFFLINE + FOTO",9,ACID,Typeface.NORMAL);
         edition.setLetterSpacing(.13f);edition.setPadding(0,dp(21),0,0);
         top.addView(edition);
 
@@ -133,11 +164,16 @@ public final class MainActivity extends Activity {
         bottom.addView(primaryRow,new LinearLayout.LayoutParams(-1,dp(55)));
         createButton=button("✳  SKAP NYTT",true,false);
         evolveButton=button("↗  EVOLVER",false,false);
-        primaryRow.addView(createButton,weighted(1.35f,0));
-        primaryRow.addView(space(dp(9)));
-        primaryRow.addView(evolveButton,weighted(1f,0));
+        aiButton=button("✦  AKT/FOTO",false,false);
+        primaryRow.addView(createButton,weighted(1.16f,0));
+        primaryRow.addView(space(dp(7)));
+        primaryRow.addView(evolveButton,weighted(.95f,0));
+        primaryRow.addView(space(dp(7)));
+        primaryRow.addView(aiButton,weighted(1.04f,0));
         createButton.setOnClickListener(v->newArtwork());
         evolveButton.setOnClickListener(v->evolveArtwork());
+        aiButton.setOnClickListener(v->startActivity(
+            new Intent(this,ClassicalStudioActivity.class)));
 
         LinearLayout secondaryRow=new LinearLayout(this);
         LinearLayout.LayoutParams secondParams=new LinearLayout.LayoutParams(-1,dp(45));
@@ -151,6 +187,8 @@ public final class MainActivity extends Activity {
         secondaryRow.addView(space(dp(9)));
         secondaryRow.addView(archiveButton,weighted(1.1f,0));
         likeButton.setOnClickListener(v->like());
+        likeButton.setOnLongClickListener(v->{reject();return true;});
+        likeButton.setContentDescription("Trykk for å lære kunstneren et positivt eksempel. Hold inne for å avvise og skape et nytt verk.");
         exportButton.setOnClickListener(v->export());
         archiveButton.setOnClickListener(v->openArchive());
 
@@ -202,37 +240,164 @@ public final class MainActivity extends Activity {
     }
 
     private long freshSeed(){return random.nextLong() ^ SystemClock.elapsedRealtimeNanos();}
-    private void newArtwork(){show(director.create(freshSeed(),archive.recent(),archive.taste()),true);}
+    private void newArtwork(){compose(null);}
     private void evolveArtwork(){
-        if(artwork==null){newArtwork();return;}
-        show(director.evolve(artwork,freshSeed(),archive.recent(),archive.taste()),true);
+        if(artwork!=null && artwork.style==Artwork.Style.AIGUIDE){
+            shortToast("Importert bildemanus er låst. Bruk SKAP NYTT eller AKT/FOTO.");
+            return;
+        }
+        compose(artwork);
     }
+
+    /** One in-flight job; rendering and evaluation never block the UI thread. */
+    private void compose(Artwork parent){
+        if(composing)return;
+        composing=true;
+        createButton.setEnabled(false);evolveButton.setEnabled(false);aiButton.setEnabled(false);
+        createButton.setText("…  TENKER");
+        status.setText("MALER 12 ULIKE KANDIDATER  ·  SER PÅ FERDIGE BILDER");
+        final long seed=freshSeed();
+        final List<Artwork> history=archive.recent();
+        final ArtDirector.Taste taste=archive.taste();
+        final int request=compositionToken.incrementAndGet();
+        composer.execute(()->{
+            try{
+                StudioDirector.Selection result=studio.create(seed,history,taste,parent);
+                runOnUiThread(()->{
+                    if(isFinishing()||isDestroyed()||request!=compositionToken.get())return;
+                    composing=false;
+                    createButton.setEnabled(true);evolveButton.setEnabled(true);aiButton.setEnabled(true);
+                    createButton.setText("✳  SKAP NYTT");
+                    show(result.artwork,true);
+                    status.setText(result.proposals + " BILDER SETT  ·  BILDE + KONSEPT-KRITIKK  "
+                        + Math.round(result.artwork.score*100) + "/100");
+                });
+            }catch(RuntimeException|OutOfMemoryError error){
+                runOnUiThread(()->{
+                    if(isFinishing()||isDestroyed()||request!=compositionToken.get())return;
+                    composing=false;
+                    createButton.setEnabled(true);evolveButton.setEnabled(true);aiButton.setEnabled(true);
+                    createButton.setText("✳  SKAP NYTT");
+                    status.setText("KUNSTNEREN MÅTTE AVBRYTE  ·  TRYKK IGJEN");
+                });
+            }
+        });
+    }
+    // External model calls have been removed from the Android app.
+    // The original aiguide-dev CLI remains an independent, optional developer
+    // tool. In-app creation and classical studies need no account or network.
+
+    private String displayTitle(Artwork piece){
+        return piece.style==Artwork.Style.AIGUIDE
+            ? AiguideScene.title(piece.sceneJson) : piece.title();
+    }
+
+    /** A deliberately hand-authored renderer demo. Never presented as AI output. */
+    private void loadDemoScene(){
+        if(composing){shortToast("Kunstneren arbeider allerede.");return;}
+        composing=true;
+        status.setText("ÅPNER ET EKSEMPEL UTEN NETT ELLER API-NØKKEL…");
+        final int request=compositionToken.incrementAndGet();
+        composer.execute(()->{
+            try(InputStream input=getAssets().open("demo_scene.json");
+                ByteArrayOutputStream bytes=new ByteArrayOutputStream()){
+                byte[] buffer=new byte[4096];int n;
+                while((n=input.read(buffer))!=-1){
+                    if(bytes.size()+n>18000)throw new IOException("Demo is too large");
+                    bytes.write(buffer,0,n);
+                }
+                String json=AiguideScene.validate(new String(bytes.toByteArray(),StandardCharsets.UTF_8));
+                long seed=freshSeed();
+                Artwork draft=new Artwork(seed,Artwork.Style.AIGUIDE,0,.5,.5,.5,.5,0,0,json);
+                PixelCritic.Analysis visual=StudioDirector.inspect(draft);
+                Artwork ready=new Artwork(seed,Artwork.Style.AIGUIDE,0,.5,.5,.5,.5,visual.score,0,json);
+                runOnUiThread(()->{
+                    if(isFinishing()||isDestroyed()||request!=compositionToken.get())return;
+                    composing=false;show(ready,true);
+                    status.setText("DEMO · MANUELT KOMPONERT · IKKE AI-GENERERT");
+                });
+            }catch(Exception|OutOfMemoryError error){
+                runOnUiThread(()->{
+                    if(isFinishing()||isDestroyed()||request!=compositionToken.get())return;
+                    composing=false;status.setText("DEMO KUNNE IKKE ÅPNES");
+                    shortToast("Feil i lokal demo. Rapportér dette som en bug.");
+                });
+            }
+        });
+    }
+
+    private void importAiScene(){
+        EditText input=new EditText(this);
+        input.setMinLines(4);input.setMaxLines(9);input.setTextSize(12);
+        input.setHint("{\"title\":\"...\",\"background\":\"#...\",\"elements\":[...]}");
+        FrameLayout wrap=new FrameLayout(this);
+        wrap.setPadding(dp(18),0,dp(18),0);
+        wrap.addView(input,new FrameLayout.LayoutParams(-1,-2));
+        new AlertDialog.Builder(this).setTitle("Importer grafikkmanus (JSON)")
+            .setMessage("Importer tidligere AI-skapte eller egne vektorverk. Kun lokal lesing, ingen modellkall.")
+            .setView(wrap)
+            .setNegativeButton("Avbryt",null)
+            .setPositiveButton("Tegn",(d,w)->{
+                try{
+                    String normalized=AiguideScene.validate(input.getText().toString().trim());
+                    Artwork next=new Artwork(freshSeed(),Artwork.Style.AIGUIDE,0,
+                        .5,.5,.5,.5,0,0,normalized);
+                    show(next,true);
+                }catch(Exception ex){shortToast("Ugyldig bildemanus: se formatkravene.");}
+            }).show();
+    }
+
     private void show(Artwork next,boolean save){
         artwork=next;
         if(save)archive.remember(next);
         gallery.setArtwork(next);
         metadata.setText(next.style.label + "   /   GEN " + String.format(Locale.ROOT,"%02d",next.generation)
             + "   /   " + next.id().substring(0,6));
-        title.setText(next.title());
-        narration.setText(next.style.thought);
-        status.setText("42 SKISSER VURDERT   ·   ESTETISK HEURISTIKK "
+        title.setText(displayTitle(next));
+        narration.setText(next.style==Artwork.Style.AIGUIDE
+            ? AiguideScene.intent(next.sceneJson) : next.intention());
+        status.setText((next.style==Artwork.Style.AIGUIDE ? "BILDEANALYSE   " : "VERKETS SELEKSJONSSCORE   ")
             + Math.round(next.score*100) + "/100"
             + (next.hasParent ? "   ·   FRA " + String.format(Locale.ROOT,"%016X",next.parentSeed).substring(0,6) : ""));
-        edition.setText("ATELIER 001     /     VERK " + archive.recent().size() + " · UTEN SKY");
-        likeButton.setText(archive.isSaved(next) ? "♥  LÆRT" : "♡  LÆR");
+        edition.setText("ATELIER 006     /     VERK " + archive.recent().size()
+            + (next.style==Artwork.Style.AIGUIDE ? " · AIGUIDE" : " · LOKALT"));
+        likeButton.setText(archive.isSaved(next)
+            ? (next.style==Artwork.Style.AIGUIDE?"♥  LAGRET":"♥  LÆRT") :
+            archive.isRejected(next) ? "✕  AVVIST" :
+            next.style==Artwork.Style.AIGUIDE?"♡  LAGRE":"♡  LÆR");
     }
     private void like(){
         if(artwork==null)return;
+        boolean remote=artwork.style==Artwork.Style.AIGUIDE;
         boolean learned=archive.teach(artwork);
-        likeButton.setText("♥  LÆRT");
-        shortToast(learned ? "Smaken din er lagret lokalt. Verket er i samlingen."
-                           : "Dette verket har allerede lært kunstneren noe.");
+        if(learned)likeButton.setText(remote?"♥  LAGRET":"♥  LÆRT");
+        else if(archive.isRejected(artwork))likeButton.setText("✕  AVVIST");
+        shortToast(learned
+            ? remote ? "Lagret i samlingen. Dette trener ikke den eksterne modellen."
+                     : "Smaken din er lagret lokalt. Verket er i samlingen."
+            : "Dette verket har allerede fått en tilbakemelding.");
+    }
+
+    private void reject(){
+        if(artwork==null||composing)return;
+        if(!archive.reject(artwork)){
+            shortToast("Dette verket har allerede fått en tilbakemelding.");return;
+        }
+        if(artwork.style==Artwork.Style.AIGUIDE){
+            likeButton.setText("✕  AVVIST");
+            shortToast("Grafikkmanus avvist lokalt. Bruk SKAP NYTT for et nytt verk.");
+            return;
+        }
+        shortToast("Registrert: denne ideen skal veie mindre. Skaper et nytt verk.");
+        newArtwork();
     }
 
     private void showDnaMenu(){
         new AlertDialog.Builder(this).setTitle("KUNSTENS DNA")
             .setItems(new String[]{"Dagens verk · samme for alle (UTC)", "Kunstnerens egenkritikk",
-                "Finn forelderverket", "Kopier verket som DNA", "Importer et DNA", "Om eksperimentet"},
+                "Finn forelderverket", "Kopier verket som DNA", "Importer et DNA",
+                "Importer grafikkmanus (JSON)", "Se tegnemotoren · uten nett",
+                "Om eksperimentet"},
                 (d,which)->{
                     if(which==0)dailyEdition();
                     else if(which==1)showCritique();
@@ -242,7 +407,9 @@ public final class MainActivity extends Activity {
                         clips.setPrimaryClip(ClipData.newPlainText("Kunst-DNA",artwork.encode()));
                         shortToast("DNA kopiert. Dette kan gjenskape verket.");
                     }else if(which==4)importDna();
-                    else if(which==5)about();
+                    else if(which==5)importAiScene();
+                    else if(which==6)loadDemoScene();
+                    else if(which==7)about();
                 }).show();
     }
 
@@ -264,15 +431,28 @@ public final class MainActivity extends Activity {
 
     private void showCritique(){
         if(artwork==null)return;
-        CritiqueReport report=CritiqueReport.evaluate(artwork,archive.recent(),archive.taste());
-        new AlertDialog.Builder(this).setTitle("Kunstnerens egenkritikk")
-            .setMessage("SCORE DA VERKET BLE VALGT: " + Math.round(artwork.score*100) + "/100\n\n"
-                + report.explain() + "\n\n"
-                + (artwork.hasParent ? "EVOLVERT FRA: " + String.format(Locale.ROOT,"%016X",artwork.parentSeed)
-                   + "\nGENERASJON: " + artwork.generation + "\n\n" : "")
-                + "Ny vurdering bruker gjeldende samling og smak. Tallene er åpne, programmerte "
-                + "heuristikker, ikke en kunstig intelligens som ser eller forstår bildet.")
-            .setPositiveButton("Tilbake",null).show();
+        final Artwork subject=artwork;
+        final CritiqueReport dna=CritiqueReport.evaluate(subject,archive.recent(),archive.taste());
+        status.setText("UNDERSØKER FAKTISKE BILDEPIKSLER…");
+        composer.execute(()->{
+            try{
+                final PixelCritic.Analysis pixels=StudioDirector.inspect(subject);
+                runOnUiThread(()->{
+                    if(isFinishing()||isDestroyed())return;
+                    if(artwork==subject)status.setText("BILDEANALYSE FULLFØRT");
+                    new AlertDialog.Builder(this).setTitle("Første ekte visuelle kritikk")
+                        .setMessage("UTVALGSSCORE: " + Math.round(subject.score*100) + "/100\n\n"
+                            + pixels.explain() + "\n\n"
+                            + "DNA-RUBRIKK (UTEN BILDE): " + Math.round(dna.total*100) + "/100\n\n"
+                            + (subject.hasParent ? "OPPHAV: " + String.format(Locale.ROOT,"%016X",subject.parentSeed) + "\n\n" : "")
+                            + "Appen måler bildestruktur, ikke skjønnhet eller mening. "
+                            + "De narrative motivene er komponert fra et åpent regelsett.")
+                        .setPositiveButton("Tilbake",null).show();
+                });
+            }catch(RuntimeException|OutOfMemoryError error){
+                runOnUiThread(()->shortToast("Kunne ikke analysere dette verket."));
+            }
+        });
     }
 
     private void toggleTheater(){
@@ -284,7 +464,7 @@ public final class MainActivity extends Activity {
     private void importDna(){
         EditText input=new EditText(this);input.setSingleLine(false);
         input.setMaxLines(4);input.setTextSize(13);
-        input.setHint("1:SEED:STYLE:... eller 2:SEED:...:PARENT");
+        input.setHint("DNA v1, v2 eller v3 (inkludert AI-tegning)");
         FrameLayout wrap=new FrameLayout(this);wrap.setPadding(dp(20),0,dp(20),0);
         wrap.addView(input,new FrameLayout.LayoutParams(-1,-2));
         new AlertDialog.Builder(this).setTitle("Importer DNA")
@@ -293,21 +473,35 @@ public final class MainActivity extends Activity {
             .setPositiveButton("Åpne",(dialog,which)->{
                 try{
                     String source=input.getText().toString().trim();
-                    if(source.length()>200)throw new IllegalArgumentException("DNA too long");
-                    show(Artwork.decode(source),true);
-                }catch(RuntimeException ex){shortToast("Ugyldig DNA. Ingen endring ble gjort.");}
+                    if(source.length()>30000)throw new IllegalArgumentException("DNA too long");
+                    Artwork imported=Artwork.decode(source);
+                    if(imported.style==Artwork.Style.AIGUIDE)
+                        AiguideScene.validate(imported.sceneJson);
+                    show(imported,true);
+                }catch(Exception ex){shortToast("Ugyldig DNA. Ingen endring ble gjort.");}
             }).show();
     }
     private void about(){
         new AlertDialog.Builder(this).setTitle("Et kunstig blikk")
             .setMessage("Kan et program utvikle et eget kunstnerisk uttrykk?\n\n"
-                + "Hver gang du trykker SKAP, foreslår kunstneren 42 komposisjoner. "
-                + "En åpent definert estetisk heuristikk vurderer rytme, tetthet, asymmetri, "
-                + "bevegelse og forskjellen fra tidligere verk.\n\n"
-                + "LÆR påvirker neste utvalg. EVOLVER muterer DNA-et til det valgte bildet. "
-                + "Alle verk kan gjenskapes fra samme DNA.\n\n"
-                + "Dette er evolusjonær generativ kunst, ikke en språkmodell eller en objektiv "
-                + "dom over kunst. Ingen konto, server, sporing eller skjulte API-er.")
+                + "ATELIER 003 skisserer 12 bilder, hvert fra 42 interne DNA-forslag. "
+                + "Bildene males i miniatyr, undersøkes og sammenliknes. Kontrast, fokus, "
+                + "negative rom, markeringer og visuell ulikhet påvirker hvilket bilde som velges.\n\n"
+                + "Verket begynner med en fysisk idé: et vanlig objekt bryter én forståelig "
+                + "regel om tyngde, skygge, helhet, størrelse eller hukommelse. "
+                + "Den valgte regelen endrer selve illustrasjonen.\n\n"
+                + "Det er en kombinatorisk kunstgrammatikk, ikke fri idétenkning. "
+                + "Den bruker ingen av dine tidligere prosjekter eller motiver.\n\n"
+                + "LÆR gir én positiv tilbakemelding. Hold LÆR inne for å AVVISE "
+                + "motivet og ideen, og skape et nytt forsøk.\n\n"
+                + "Hele Android-appen fungerer nå uten nett og API-nøkler. "
+                + "AKT/FOTO åpner et klassisk atelier med kroppsstudier, og gjenskaper "
+                + "faktiske fotografier du selv velger ved hjelp av Androids bildedekoder. "
+                + "Et fotografi kan tolkes som olje, kull eller sepia, og bildet blir værende lokalt. "
+                + "Fotorealistisk gjengivelse betyr trofast reproduksjon av importerte bildepiksler, "
+                + "ikke syntetisk generering eller en trent diffusjonsmodell. "
+                + "Egne grafikkmanus fra aiguide kan fortsatt importeres offline. "
+                + "Bildescoren er strukturell, ikke kunstnerisk forståelse.")
             .setPositiveButton("Tilbake til atelieret",null).show();
     }
     private void openArchive(){
@@ -320,7 +514,7 @@ public final class MainActivity extends Activity {
         String[] entries=new String[collection.size()];
         for(int i=0;i<entries.length;i++){
             Artwork a=collection.get(i);
-            entries[i]=a.title()+"\n"+a.style.label+" · "+a.id().substring(0,8);
+            entries[i]=displayTitle(a)+"\n"+a.style.label+" · "+a.id().substring(0,8);
         }
         new AlertDialog.Builder(this).setTitle("Din samling · "+collection.size()+" verk")
             .setItems(entries,(d,choice)->show(collection.get(choice),true))
@@ -329,12 +523,12 @@ public final class MainActivity extends Activity {
     }
     private void deleteFromArchive(List<Artwork> collection){
         String[] names=new String[collection.size()];
-        for(int i=0;i<names.length;i++)names[i]=collection.get(i).title();
+        for(int i=0;i<names.length;i++)names[i]=displayTitle(collection.get(i));
         new AlertDialog.Builder(this).setTitle("Velg verk å fjerne")
             .setItems(names,(d,index)->{
                 Artwork target=collection.get(index);
                 new AlertDialog.Builder(this).setTitle("Fjerne fra samlingen?")
-                    .setMessage(target.title()+" slettes bare fra den lokale samlingen, ikke fra eventuelle eksporterte PNG-filer.")
+                    .setMessage(displayTitle(target)+" slettes bare fra den lokale samlingen, ikke fra eventuelle eksporterte PNG-filer.")
                     .setPositiveButton("Slett",(confirm,which)->{archive.delete(target);shortToast("Fjernet fra samlingen");})
                     .setNegativeButton("Avbryt",null).show();
             }).setNegativeButton("Avbryt",null).show();
@@ -405,6 +599,8 @@ public final class MainActivity extends Activity {
     private void shortToast(String message){Toast.makeText(this,message,Toast.LENGTH_SHORT).show();}
     @Override protected void onDestroy(){
         if(gallery!=null)gallery.dispose();
+        compositionToken.incrementAndGet();
+        composer.shutdownNow();
         exports.shutdown();super.onDestroy();
     }
 }
