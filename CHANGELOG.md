@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.1 · Responsive atelier · 2026-11-19
+
+- Keep the drawing canvas visible on compact and landscape Android screens.
+- The classical/photo/neuralkunst controls are now in an independent scrollable panel.
+- The model handoff workflow and strict no-network-permission policy are unchanged.
+
 ## 0.7.0 · Offline neural handoff · 2026-11-19
 
 - Add a genuine local text-to-image path via explicitly installed Local Diffusion (stable-diffusion.cpp), without API keys or cloud services.
