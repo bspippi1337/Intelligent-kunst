@@ -156,13 +156,20 @@ def generate(prompt, model):
             "bspippi1337/aiguide-dev.git@c55f658610a0bb27f90c75619510dc8ad5c36a2f"
         ) from exc
     instructions = (
-        "Compose a visually meaningful ORIGINAL artwork, no repeated icons, "
-        "fandom or any prior ChatGPT history. Create a concrete drawable concept. "
-        "Return ONLY JSON with version:1,title,intent,background and 20-75 elements. "
-        "Each element has kind,color,optional alpha; kind rect/ellipse has x,y,w,h; "
-        "kind line has x,y,x2,y2,width; curve has x,y,cx1,cy1,cx2,cy2,x2,y2,width; "
-        "poly has points as coordinate pairs. All coordinates normalized 0..1. "
-        "Use a strong focal subject, authored material language and negative space. "
+        "Create a visually arresting ORIGINAL art composition unrelated to previous "
+        "conversations, fandom, brand icons or preset subject inventories. "
+        "Return ONLY valid JSON: version:1,title,intent,background,#RRGGBB colors, "
+        "12-55 drawable elements (8..90 allowed by the renderer). "
+        "Each has kind,color,optional alpha. rect/ellipse use x,y,w,h; "
+        "line uses x,y,x2,y2,width; curve uses x,y,cx1,cy1,cx2,cy2,x2,y2,width; "
+        "poly uses points [[x,y],...]; expressive path uses commands with op "
+        "M(x,y),L(x,y),Q(cx,cy,x,y),C(cx1,cy1,cx2,cy2,x,y),Z and optional mode "
+        "fill or stroke with width. Filled paths close with Z. "
+        "Optional gradient is {type:linear,start:#RRGGBB,end:#RRGGBB,x1,y1,x2,y2} "
+        "or {type:radial,start:#RRGGBB,end:#RRGGBB,cx,cy,r}. "
+        "Use 2-8 bold custom silhouettes and layered gradients; pursue coherent "
+        "material, depth, negative space and visual tension over clipart. "
+        "Normalized coordinates usually 0..1; keep entire JSON under 17500 chars. "
         f"Artistic request: {prompt}"
     )
     output, _ = ask(instructions, model=model, capture_reasoning=False)
