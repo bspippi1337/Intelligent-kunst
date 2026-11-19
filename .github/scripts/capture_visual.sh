@@ -29,4 +29,12 @@ adb shell am start -n no.blckswan.intelligentkunst.lab/no.blckswan.intelligentku
 sleep 12
 adb exec-out screencap -p > visual/study-vector-fixture.png
 test -s visual/study-vector-fixture.png
+
+# Keyless academic adult life-drawing fixture through the actual Android UI.
+adb shell am force-stop no.blckswan.intelligentkunst.lab
+adb shell am start -n no.blckswan.intelligentkunst.lab/no.blckswan.intelligentkunst.MainActivity \
+    --ez ik_classical_fixture true
+sleep 9
+adb exec-out screencap -p > visual/study-classical-figure.png
+test -s visual/study-classical-figure.png
 sha256sum visual/*.png
