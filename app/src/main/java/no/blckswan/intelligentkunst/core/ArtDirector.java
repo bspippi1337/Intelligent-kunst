@@ -16,6 +16,9 @@ public final class ArtDirector {
         private final int[] propositionRejections = new int[StoryPlan.Proposition.values().length];
         private final int[] paletteRejections = new int[Artwork.PALETTES.length];
         public void like(Artwork art) {
+            // A remote-model scene can be archived but does not train the local
+            // conceptual generator. Its palette ID is only a serialization slot.
+            if(art.style==Artwork.Style.AIGUIDE)return;
             if (styleVotes[art.style.ordinal()] < 1000) styleVotes[art.style.ordinal()]++;
             if (paletteVotes[art.palette] < 1000) paletteVotes[art.palette]++;
             if(art.style==Artwork.Style.FABLE){
@@ -26,6 +29,7 @@ public final class ArtDirector {
             }
         }
         public void dislike(Artwork art){
+            if(art.style==Artwork.Style.AIGUIDE)return;
             if(paletteRejections[art.palette]<1000)paletteRejections[art.palette]++;
             if(art.style==Artwork.Style.FABLE){
                 StoryPlan.Idea idea=StoryPlan.generate(art.seed);
