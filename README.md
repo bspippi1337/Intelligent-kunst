@@ -56,6 +56,7 @@ Dette er bedre *uttrykksrom*, ikke dokumentasjon på at modellen automatisk prod
 Du kan også bruke det **faktiske Python-biblioteket** med `tools/aiguide_generate.py` i Termux/Linux og importere JSON i appen via `DNA / ? → Importer AI-bildemanus`. Originalbiblioteket og den native Android-porten er forskjellige implementasjoner av samme arbeidsflyt.
 
 - AI-knappen krever internett og din egen OpenAI API-nøkkel. Nøkkelen lagres ikke, og modellen kan påføre API-kostnader.
+- På AI-verk betyr **♡ LAGRE** at verket arkiveres lokalt. Dette trener **ikke** den eksterne modellen. Positiv/negativ læring påvirker bare den lokale FORTELLING-motoren. Avviste AI-verk blir registrert lokalt uten å bli sendt til modellleverandøren.
 - Resultatets tegnekommandoer blir validert og begrenset til et lite sett med former, kurver, linjer og polygoner. Ingen skript eller eksterne ressurs-URL-er blir utført.
 - Logg med synlig forespørsel og svar lagres privat i appens filer, i JSONL-format. Ingen påstand om tilgang til skjult resonnering.
 - **Dette er KI-styrt illustrasjon, ikke en diffusjonsmodell.** Kunstnerisk kvalitet kan ikke garanteres av språkmodellen eller den eksisterende pikselpoengsummen.
