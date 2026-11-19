@@ -19,6 +19,7 @@ public final class ArtArchive {
         store=context.getSharedPreferences("artist_archive_v1",Context.MODE_PRIVATE);
     }
     public List<Artwork> saved(){return read("saved");}
+    public List<Artwork> rejected(){return read("rejected");}
     public List<Artwork> recent(){return read("recent");}
     private List<Artwork> read(String key) {
         ArrayList<Artwork> result=new ArrayList<>();
@@ -57,6 +58,10 @@ public final class ArtArchive {
         try {return Artwork.decode(store.getString("current",""));}
         catch(RuntimeException ignored){return null;}
     }
+    public boolean isRejected(Artwork artwork){
+        for(Artwork item:rejected())if(item.id().equals(artwork.id()))return true;
+        return false;
+    }
     public boolean isSaved(Artwork artwork) {
         for(Artwork item:saved())if(item.id().equals(artwork.id()))return true;
         return false;
@@ -75,7 +80,10 @@ public final class ArtArchive {
         t.load(readVotes("style_votes",Artwork.Style.values().length),
             readVotes("palette_votes",Artwork.PALETTES.length),
             readVotes("object_votes",no.blckswan.intelligentkunst.core.StoryPlan.ObjectKind.values().length),
-            readVotes("proposition_votes",no.blckswan.intelligentkunst.core.StoryPlan.Proposition.values().length));
+            readVotes("proposition_votes",no.blckswan.intelligentkunst.core.StoryPlan.Proposition.values().length),
+            readVotes("object_rejections",no.blckswan.intelligentkunst.core.StoryPlan.ObjectKind.values().length),
+            readVotes("proposition_rejections",no.blckswan.intelligentkunst.core.StoryPlan.Proposition.values().length),
+            readVotes("palette_rejections",Artwork.PALETTES.length));
         return t;
     }
     private int[] readVotes(String key,int size){
@@ -92,12 +100,24 @@ public final class ArtArchive {
     }
     public boolean teach(Artwork artwork) {
         // One vote per artwork prevents endlessly inflating preferences by tapping LÆR.
-        if(!save(artwork))return false;
+        if(isRejected(artwork)||!save(artwork))return false;
         ArtDirector.Taste taste=taste();taste.like(artwork);
         store.edit().putString("style_votes",join(taste.styleVotes()))
             .putString("palette_votes",join(taste.paletteVotes()))
             .putString("object_votes",join(taste.objectVotes()))
             .putString("proposition_votes",join(taste.propositionVotes())).apply();
+        return true;
+    }
+    public boolean reject(Artwork artwork){
+        if(isSaved(artwork)||isRejected(artwork))return false;
+        List<Artwork> items=rejected();
+        items.add(0,artwork);write("rejected",items);
+        ArtDirector.Taste taste=taste();taste.dislike(artwork);
+        store.edit()
+            .putString("object_rejections",join(taste.objectRejections()))
+            .putString("proposition_rejections",join(taste.propositionRejections()))
+            .putString("palette_rejections",join(taste.paletteRejections()))
+            .apply();
         return true;
     }
 }
